@@ -1,0 +1,104 @@
+---
+title: "lab_02"
+author: "derek willis"
+date: "8/09/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and establish settings
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse. If you have not installed the tidyverse already, remove the # from the next line and run it first.  
+# install.packages('tidyverse')
+library(tidyverse)
+library(lubridate)
+```
+
+## Load Data
+
+Let's keep working with the slice of WinRed contribution data from West Virginia.  
+
+```{r}
+wv_winred_contribs <- read_rds("data/lab_02.rds")
+```
+
+## Examine Data
+
+## Answer questions
+
+**Q1** Create a new column that divides the contribution amounts into the following options - less than $10, $10-$25, $26-$50, $51_$100, $101-$500, $501 and up - and calculates how many contributions are in each group. How would you describe the distribution of contributions in a sentence?
+A1. 
+Based on the tibble, most of the contributions were between $10 and $25 with 5,672 and the less than $10 category with 4,638, as the amount contributed goes higher the other numbers of contributions drop.
+```{r}
+wv_winred_categories <- wv_winred_contribs %>%
+  mutate(
+    amount_category = case_when(
+        amount < 10 ~ "Less than $10",
+        amount >= 10 & amount <= 25 ~ "Between $10 and $25",
+        amount > 25 & amount <= 50 ~ "Between $26 and $50",
+        amount > 50 & amount <= 100 ~ "Between $51 and $100",
+        amount > 101 & amount <= 501 ~ "Between $101 and $500",
+        amount >= 501 ~ "More than $501"
+      )
+  )
+head(wv_winred_categories)
+
+wv_winred_categories %>% 
+  group_by(amount_category) %>% 
+  summarize(total_amount = sum(amount)) %>% 
+  arrange(desc(total_amount))
+
+wv_winred_categories %>%
+  group_by(amount_category) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange((count_contribs))
+```
+Q2. Which West Virginia donors made the most contributions of less than $10? You'll need to use a combination of columns to get unique donors.  
+A2. I'm think, my answer below isn't fully correct, I went the totally funky way to get this and I'm realizing that it might not be as comprehensive as it should be. But based on my answer below, Franco Colonna, Betty Bender, Rev. Dr. John Almond, Sheila O’keefe and Gloria Fox were the top five who made contributions of less than $10. Most of them showed up multiple times in the nibble I created, so I’m sure there is a way to combine those or make it neater. But I think this mostly got me to my answer. I included address one in case there were people with the same name, but I'm confused as how to make that person only show once.
+
+```{r}
+filtered_contributions<- wv_winred_categories %>% filter(amount_category == "Less than $10")
+
+filtered_contributions %>%
+  group_by(amount, last_name, first_name, address_one) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+
+```
+Q3. What questions do the results of Q2 raise in your mind? How could you use the data to explore them? No code here, just your questions.
+A3. It was surprising how much people were donating, even if it was little amount. Franco Colonna was the top contributor for what we were looking at, with 92 donations of $5.00. Which now thinking of it and looking at the tibble, he could very well have even more than what I'm seeing. I think I would need to run cleaner and more specific code on the data to truly grasp what I'm looking at. It does raise an interesting question of who these people are and why they're donating so much. I would want to use the data to see how much these contributors were donating as whole, who knows, Franco could have also donated over $500. I wouldn't know from what I did here.
+
+Q4. Which month saw the most contributions?
+A4. April 2021 saw the most contributions with $142,277.
+
+```{r}
+wv_winred_categories %>%
+  mutate(Month = floor_date(date, "month")) %>%
+  group_by(Month) %>%
+  summarise(total_amount = sum(amount)) %>%
+  arrange(desc(total_amount))
+```
+
+Q5. How many contributions of $2,900 - the individual maximum donation - were there, and who did they go to? How many of the recipients are from West Virginia? Do some googling to find out.
+A5. There were six people who made contributions of $2,900. If my Google searches brought up the correct people, I believe all of them are from West Virginia or lived there at some point.Zenovy Wowczuk is  Director of Client Solutions for the West Virginia University Innovation Corporation. Zobrist is or was at least in 2014 a politician and ran for office. Robert Petrarca is a doctor in WV. Todd Cornett showed up online but he was the only one I was iffy on.
+
+```{r}
+wv_winred_contribs %>%
+  filter(amount == 2900) %>%
+  group_by(last_name, first_name, amount) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange((count_contribs))
+
+``````
