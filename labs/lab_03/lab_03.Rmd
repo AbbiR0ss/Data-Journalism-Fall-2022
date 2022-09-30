@@ -1,0 +1,189 @@
+---
+title: "lab_03"
+author: "Derek Willis"
+date: "8/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and establish settings
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse   
+library(tidyverse)
+
+# Load janitor here
+library(janitor)
+```
+
+## Load data
+```{r}
+# Write code to load MD slice of FEC House candidate contribution data and call it md_contribs.
+# The data is called lab_03.rds, and is in the data folder alongside lab_03.Rmd (this data notebook)
+md_contribs <- read_rds("data/lab_03.rds")
+
+```
+
+
+## Answer questions
+
+Q1: Which seven cities in Maryland had the largest _number_ of contributions from donors? How many did each have? To answer this question, you'll have to clean the messy "contributor_city" field.
+Note: To answer this question, you'll need to see every variation of the "contributor_city" for the top seven cities, which you should identify through some initial analysis. Then find variations of them and change those variations into the most common version.
+
+A1: The seven cities with the largest contributions are: 
+BALTIMORE- 6,719 
+BETHESDA- 5,855
+SILVER SPRING- 4,654
+CHEVY CHASE- 3,260
+ROCKVILLE- 2,213
+ANNAPOLIS- 1,996
+
+```{r}
+corrected_cities<- md_contribs %>%
+mutate(upper_city = str_to_upper(contributor_city))
+
+```
+
+```{r}
+corrected_cities <- md_contribs %>%
+  group_by(contributor_city) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
+
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^BALT")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^BETH")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^SILV")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^CHEV")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^POT")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^ROC")) %>%
+  count()
+```
+```{r}
+corrected_cities %>%
+  group_by(contributor_city) %>%
+  filter(str_detect(contributor_city, "^AN")) %>%
+  count()
+```
+```{r}
+spelling_corrected_cities <- corrected_cities %>%
+  mutate(contributor_city = case_when(contributor_city == "BETHESA" ~ "BETHESDA",
+         contributor_city == "BETHSDA" ~ "BETHESDA",
+         contributor_city == "SILVER SPRING, MD" ~ "SILVER SPRING",
+         contributor_city == "SILVER SPRINGS" ~ "SILVER SPRING",
+         contributor_city == "SLIVER SPRING" ~ "SILVER SPRING",
+         contributor_city == "CHEVY CHASE VILLAGE" ~ "CHEVY CHASE",
+         contributor_city == "ANAPOLIS" ~ "ANNAPOLIS",
+         contributor_city == "ANNAPOLID" ~ "ANNAPOLIS",
+         contributor_city == "ANNNAPOLIS" ~ "ANNAPOLIS",
+         contributor_city == "ANRETIREDPOLIS" ~ "ANNAPOLIS",
+         TRUE ~ contributor_city))
+
+
+    ```
+  
+Q2: Find the 5-digit ZIP code in Maryland that had the highest total amount of contributions (by dollar value). Where is that zip code and what kind of area is it? Which committee is the largest recipient of money from that zip code? How many of the top five recipients are Maryland candidates?
+
+A2: The zipcode with the highest total amount of contributions is 20815 (This includes Bethesda, Chevy Chase and Silver Spring Maryland among others) with a total of $1,804,495.47. The committee that received the largest donation from this zipcode is Jamie Raskin for Congress, they received $178,088.55. Of the top five recipients two are are Maryland candidates, Jamie Raskin and Heather Mizeur.
+
+
+
+```{r}
+cleaned_zips <- md_contribs %>%
+  mutate(contributor_zip = str_sub(contributor_zip, start=1L, end=5L))
+```
+
+```{r}
+cleaned_zips %>% 
+group_by(contributor_zip) %>%
+  summarise(total_zip = sum(contribution_receipt_amount)) %>%
+  arrange(desc(total_zip))
+```
+
+```{r}
+cleaned_zips %>% filter(contributor_zip == "20815") %>% 
+  group_by(committee_name) %>%
+  summarise(
+    total_amount = sum(contribution_receipt_amount)
+  ) %>%
+  arrange(desc(total_amount))
+```
+Q3: Let's look at top individual donors to House campaigns. Write code to generate a list of top donors using name and city, adding up the total amount of contributions. One of the top few donors has a very strong connection to the U.S. House - who is that and what does he do? How does his donation pattern differ from the second-largest donor, and what can you say about that second-largest donor?
+
+Feel free to add any interesting "color" (little interesting details) you find in your research.  
+
+A3: The top contributor is David Trone. He's donated a total of $92,800. Trone is a businessman and  Democratic candidate for Congress in Maryland's 6th District. While doing some background research on him, I found that started Total Wine & More in graduate school, which is now the largest private wine retailer in the country, according to his website.
+
+The second highest contributor is Juanita Mason, who has contributed $84,665.57. I am not finding a lot about her online, but it clear that she is affiliated with the Republican party or is at least a big supporter from her donating habits. Her top contributions are to out of state Republicans, her top three Ronny Jackson, Jake Ellzey and Steve Scalise.
+
+David Trone's top contributions were mostly to Democratic campaigns around the country, including Christina Bohannan, Jim Cooper and Eddie Rodriguez.
+
+```{r}
+top_contributors <- md_contribs %>%
+  group_by(contributor_name,contributor_city) %>%
+  summarise(
+    total_amount = sum(contribution_receipt_amount)
+  ) %>%
+  arrange(desc(total_amount))
+```
+
+
+```{r}
+md_contribs %>% filter(contributor_name == "TRONE, DAVID") %>% 
+  group_by(committee_name) %>%
+  summarise(
+    total_amount = sum(contribution_receipt_amount)
+  ) %>%
+  arrange(desc(total_amount))
+  
+```
+```{r}
+md_contribs %>% filter(contributor_name == "MASON, JUANITA") %>% 
+  group_by(committee_name) %>%
+  summarise(
+    total_amount = sum(contribution_receipt_amount)
+  ) %>%
+  arrange(desc(total_amount))
+  
+```
+
+# Hint
+# First, create a dataframe that shows the top 5-digit ZIP code by total dollar amount
+# Second, use the top ZIP code in the dataframe you just created and create a new dataframe that shows the committee that got the most money from that ZIP code.
+
+
