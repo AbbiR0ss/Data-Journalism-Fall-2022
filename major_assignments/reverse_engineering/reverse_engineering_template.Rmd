@@ -1,6 +1,6 @@
 ---
 title: "Reverse Engineering Project"
-author: "Student names here"
+author: Abbi Ross, Group 2
 date: "Date here"
 output:
   html_document:
@@ -25,21 +25,35 @@ In this notebook, we are reverse engineering the story, [STORY NAME](STORY URL)
 Loading required libraries for this analysis.
 
 ```{r echo=FALSE, message=FALSE}
-
+options(scipen=999)
+library(tidyverse)
+library(lubridate)
+library(janitor)
 ```
 
 ## Load and Cleaning Data
 
 In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data. 
 
+# Load required data # Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
 ```{r}
-# Load required data
-
-# Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
+moore_contribs <- read.csv("data/Moore_ContributionsList.csv")
+```
 
 # Clean required data and prepare for analysis if needed. 
+``` {r}
+moore_contribs <- moore_contribs %>%
+  clean_names()
+```
 
+```{r}
+moore_contribs
+glimpse
+```
 
+```{r}
+moore_contribs_cleaned <- moore_contribs %>% mutate(contribution_date=mdy(contribution_date))
+head(moore_contribs_cleaned)
 ```
 
 ## Sentences to Engineer
@@ -47,14 +61,69 @@ In this notebook, we are reverse engineering five sentences from the story.
 
 ### Sentence 1
 
-* **Sentence text**: [Paste in sentence to engineer here]
+* **Sentence text**: “We set the pace in fundraising — including raising more money in Maryland and having 73% of donations $100 or less — because this campaign has inspired thousands of people from all walks of life in Maryland and across the country who see the opportunity to make Wes Moore governor of Maryland and change the trajectories of families who have been left behind,” the campaign said in a statement."
 * **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+
+A.) We were not able to confirm the finding because of issues with our code. We tried a number of different codes and even kepy working on it after turning it in earlier today with Dylan's submission. Sununu's code from 115-127 is the closest now, and he said it worked for him -- but it hasn't worked for me. At this point I'm so confused and I wanted to leave all of my examples so you could see them, so it's definitely a lot.
+
 
 ```{r}
 # Put code to reverse engineer sentence here
 
 # Display results of code below this codeblock
 
+```
+
+```{r}
+moore_contribs_categories_lessthan <- moore_contribs_cleaned %>%
+  filter(contribution_amount <= 100)
+head(moore_contribs_categories_lessthan)
+```
+
+```{r}
+moore_contribs_categories_lessthan %>%
+  group_by(contribution_amount) %>%
+  summarize(total_amount = sum(contribution_amount)) %>%
+  arrange(desc(total_amount))
+```
+
+```{r}
+moore_contribs %>%
+mutate(across(contribution_amount, as.numeric))
+head(moore_contribs)
+```
+
+We tried this code and it feels like the best option, but we're stuck on how to turn the field we're creating into a character instead of the "less than 100" that ends up populating. We went back to pre-lab 02 and lab 02 and tried working with the examples given there but then it wouldn't read out contribution amounts.
+```{r}
+moore_contribs_less_than_100 <- moore_contribs %>%
+mutate(contribution_amount = case_when(
+        contribution_amount <= 100 ~ "Less Than 100"))
+```
+
+```{r}
+moore_contribs_less_than_100 %>% 
+  group_by(contributor_name) %>%
+  summarise(
+    contribution_amount = n()
+  ) %>%
+  arrange((amount_contributions))
+```
+---
+
+Sununu also tried this later this afternoon after we already submitted. I don't think it's quite correct on my end though.
+
+```{r}
+moore_contribs_less_than_100<- moore_contribs %>%
+  filter(contribution_amount < 100)
+```
+
+```{r}
+moore_contribs_less_than_100 <- moore_contribs_less_than_100 %>%
+  group_by(contributor_name) %>%
+  summarise(total = n(), amount = sum(contribution_amount)) %>%
+  arrange(desc(total))
+moore_contribs_less_than_100
+# Display results of code below this codeblock
 ```
 
 ### Sentence 2
