@@ -1,7 +1,7 @@
 ---
 title: "Reverse Engineering Project"
 author: Abbi Ross, Group 2
-date: "Date here"
+date: Oct. 16, 2022
 output:
   html_document:
     theme: cerulean
@@ -66,88 +66,229 @@ In this notebook, we are reverse engineering five sentences from the story.
 
 A.) We were not able to confirm the finding because of issues with our code. We tried a number of different codes and even kepy working on it after turning it in earlier today with Dylan's submission. Sununu's code from 115-127 is the closest now, and he said it worked for him -- but it hasn't worked for me. At this point I'm so confused and I wanted to leave all of my examples so you could see them, so it's definitely a lot.
 
+Updated Answer 10/16: I updated my code with what we worked on last weekend after submitting. I feel closer to the correct answer now, but also just realized we're missing the actual percentage. I will work on adding that as well.
 
+#We filtered the data for contributions under 100
 ```{r}
 # Put code to reverse engineer sentence here
-
-# Display results of code below this codeblock
-
-```
-
-```{r}
-moore_contribs_categories_lessthan <- moore_contribs_cleaned %>%
-  filter(contribution_amount <= 100)
-head(moore_contribs_categories_lessthan)
-```
-
-```{r}
-moore_contribs_categories_lessthan %>%
-  group_by(contribution_amount) %>%
-  summarize(total_amount = sum(contribution_amount)) %>%
-  arrange(desc(total_amount))
-```
-
-```{r}
-moore_contribs %>%
-mutate(across(contribution_amount, as.numeric))
-head(moore_contribs)
-```
-
-We tried this code and it feels like the best option, but we're stuck on how to turn the field we're creating into a character instead of the "less than 100" that ends up populating. We went back to pre-lab 02 and lab 02 and tried working with the examples given there but then it wouldn't read out contribution amounts.
-```{r}
-moore_contribs_less_than_100 <- moore_contribs %>%
-mutate(contribution_amount = case_when(
-        contribution_amount <= 100 ~ "Less Than 100"))
-```
-
-```{r}
-moore_contribs_less_than_100 %>% 
-  group_by(contributor_name) %>%
-  summarise(
-    contribution_amount = n()
-  ) %>%
-  arrange((amount_contributions))
-```
----
-
-Sununu also tried this later this afternoon after we already submitted. I don't think it's quite correct on my end though.
-
-```{r}
-moore_contribs_less_than_100<- moore_contribs %>%
+moore_contribs_under_hundred <- moore_contribs_cleaned %>%
   filter(contribution_amount < 100)
 ```
 
+#After filtering, we set out to seperate the number of contribs under 100 and their amounts
+
 ```{r}
-moore_contribs_less_than_100 <- moore_contribs_less_than_100 %>%
+moore_contribs_under_hundred <- moore_contribs_under_hundred %>%
   group_by(contributor_name) %>%
   summarise(total = n(), amount = sum(contribution_amount)) %>%
   arrange(desc(total))
-moore_contribs_less_than_100
+moore_contribs_under_hundred
 # Display results of code below this codeblock
 ```
 
 ### Sentence 2
 
-* **Sentence text**: [Paste in sentence to engineer here]
-* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+* **Sentence text**: "Tom Perez, a former leader of the Democratic National Committee, raised nearly $1.7 million in donations from outside Maryland.” 
+* **Analysis summary**: Our code is saying that Perez raised over $2.4 million in out-of-state donations. We found there to be 3,601 contributions for a total of $2,451,371. This leads me to believe that we did not properly clean Maryland out of contributor state column or there's another issue we are overlooking. To better understand this issue, we will need to rerun our code and most likely to do some more cleaning.
+
+Upon further thought, we realized this could be because there have been more contributions added since Stephen wrote his story in March. 
 
 ```{r}
 # Put code to reverse engineer sentence here
+perez_contribs <- read.csv("data/perez_contributions.csv")
+```
 
-# Display results of code below this codeblock
+```{r}
+perez_contribs <- perez_contribs %>%
+  clean_names()
+```
 
+#After cleaning our data we wanted to find a way to turn the state abbreviations from the address column into it's own column. We did not add the territories though.
+```{r}
+# Put code to reverse engineer sentence here
+states_perez <- perez_contribs %>%
+    mutate(contributor_state = case_when(
+    str_detect(contributor_address, " AL ") ~ "Alabama",
+    str_detect(contributor_address, " AK ") ~  "Alaska",
+    str_detect(contributor_address, " AZ ") ~  "Arizona",
+    str_detect(contributor_address, " AR ") ~  "Arkansas",
+    str_detect(contributor_address, " CA ") ~  "California",
+    str_detect(contributor_address, " CO ") ~ "Colorado",
+    str_detect(contributor_address, " CT ") ~  "Connecticut",
+    str_detect(contributor_address, " DE ") ~  "Delaware",
+    str_detect(contributor_address, " FL ") ~  "Florida",
+    str_detect(contributor_address, " GA ") ~  "Georgia",
+    str_detect(contributor_address, " HI ") ~ "Hawaii",
+    str_detect(contributor_address, " ID ") ~  "Idaho",
+    str_detect(contributor_address, " IL ") ~  "Illinois",
+    str_detect(contributor_address, " IN ") ~  "Indiana",
+    str_detect(contributor_address, " IA ") ~  "Iowa",
+    str_detect(contributor_address, " KS ") ~ "Kansas",
+    str_detect(contributor_address, " KY ") ~  "Kentucky",
+    str_detect(contributor_address, " LA ") ~  "Louisiana",
+    str_detect(contributor_address, " ME ") ~  "Maine",
+    str_detect(contributor_address, " MD ") ~  "Maryland",
+    str_detect(contributor_address, " MA ") ~  "Massachusetts",
+    str_detect(contributor_address, " MI ") ~  "Michigan",
+    str_detect(contributor_address, " MN ") ~ "Minnesota",
+    str_detect(contributor_address, " MS ") ~  "Mississippi",
+    str_detect(contributor_address, " MO ") ~  "Missouri",
+    str_detect(contributor_address, " MN ") ~  "Montana",
+    str_detect(contributor_address, " NE ") ~  "Nebraska",
+    str_detect(contributor_address, " NV ") ~ "Nevada",
+    str_detect(contributor_address, " NH ") ~ "New Hampshire",
+    str_detect(contributor_address, " NJ ") ~ "New Jersey",
+    str_detect(contributor_address, " NM ") ~ "New Mexico",
+    str_detect(contributor_address, " NY ") ~  "New York",
+    str_detect(contributor_address, " NC ") ~ "North Carolina",
+    str_detect(contributor_address, " ND ") ~ "North Dakota",
+    str_detect(contributor_address, " OH ") ~ "Ohio",
+    str_detect(contributor_address, " OK ") ~ "Oklahoma",
+    str_detect(contributor_address, " OR ") ~ "Oregon",
+    str_detect(contributor_address, " PA ") ~ "Pennsylvania",
+    str_detect(contributor_address, " RI ") ~ "Rhode Island",
+    str_detect(contributor_address, " SC ") ~ "South Carolina",
+    str_detect(contributor_address, " SD ") ~ "South Dakota",
+    str_detect(contributor_address, " TN ") ~ "Tennessee",
+    str_detect(contributor_address, " TX ") ~ "Texas",
+    str_detect(contributor_address, " UT ") ~ "Utah",
+    str_detect(contributor_address, " VT ") ~ "Vermont",
+    str_detect(contributor_address, " VA ") ~ "Virginia",
+    str_detect(contributor_address, " WA ") ~ "Washington",
+    str_detect(contributor_address, " WV ") ~ "West Virginia",
+    str_detect(contributor_address, " WI ") ~ "Wisconsin",
+    str_detect(contributor_address, " WY ") ~ "Wyoming",
+    str_detect(contributor_address, " DC ") ~ "Washington DC",
+    TRUE ~ contributor_address
+  ))
+```
+
+#From there we ran code to find the amounts, but then realized we also needed to remove MD from the column.
+
+```{r}
+states_perez %>%
+group_by(contributor_state) %>%
+summarise(total_state = sum(contribution_amount),
+            mean_amount= mean(contribution_amount),
+          n=n()) %>%
+arrange(desc(total_state))
+```
+
+#We removed MD
+```{r}
+states_perez_no_md <- states_perez %>%
+  filter(!str_detect(contributor_state, "Maryland"))
+```
+
+#Without MD nolonger in the data we were able to rerun and get the mean amount.
+```{r}
+states_perez_no_md %>%
+  summarise(total_state_amount = sum(contribution_amount),
+          mean_amount= mean(contribution_amount),
+          number_of_contribs=n())%>%
+arrange(desc(total_state_amount))
 ```
 
 ### Sentence 3
 
-* **Sentence text**: [Paste in sentence to engineer here]
-* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+* **Sentence text**: “Moore, a U.S. Army veteran and bestselling author, built a campaign war chest that included over $2.3 million in out-of-state contributions."
+* **Analysis summary**: 
+
+According to our code analysis, Moore received roughly $2.4 million in out-of-state contributions. According to our code, there were 5,006 contributions for a total of $2,403,216. This is slightly higher than the $2.3 million mentioned in the sentence we were reverse engineering. I'm not sure exactly how we would have added numbers, especially considering we did not work in the territories of the U.S. that contributed in this data. We will need to rerun and possibly reclean our data.
+
+Upon further thought, we just realized this could be because there have been more contributions added since Stephen wrote his story in March.
+
+#We followed the same steps for sentence 3 that we did in sentence 2. We created a new column for our states and then we filtered MD out before doing code to find the total amount of out-of-state contributions.
 
 ```{r}
 # Put code to reverse engineer sentence here
+moore_contribs_out_of_state <- read.csv("data/Moore_ContributionsList.csv")
+```
 
-# Display results of code below this codeblock
+```{r}
+states_moore_clean <- moore_contribs_out_of_state %>%
+  clean_names()
+```
 
+```{r}
+# Put code to reverse engineer sentence here
+states_moore <- states_moore_clean %>%
+    mutate(contributor_state = case_when(
+    str_detect(contributor_address, " AL ") ~ "Alabama",
+    str_detect(contributor_address, " AK ") ~  "Alaska",
+    str_detect(contributor_address, " AZ ") ~  "Arizona",
+    str_detect(contributor_address, " AR ") ~  "Arkansas",
+    str_detect(contributor_address, " CA ") ~  "California",
+    str_detect(contributor_address, " CO ") ~ "Colorado",
+    str_detect(contributor_address, " CT ") ~  "Connecticut",
+    str_detect(contributor_address, " DE ") ~  "Delaware",
+    str_detect(contributor_address, " FL ") ~  "Florida",
+    str_detect(contributor_address, " GA ") ~  "Georgia",
+    str_detect(contributor_address, " HI ") ~ "Hawaii",
+    str_detect(contributor_address, " ID ") ~  "Idaho",
+    str_detect(contributor_address, " IL ") ~  "Illinois",
+    str_detect(contributor_address, " IN ") ~  "Indiana",
+    str_detect(contributor_address, " IA ") ~  "Iowa",
+    str_detect(contributor_address, " KS ") ~ "Kansas",
+    str_detect(contributor_address, " KY ") ~  "Kentucky",
+    str_detect(contributor_address, " LA ") ~  "Louisiana",
+    str_detect(contributor_address, " ME ") ~  "Maine",
+    str_detect(contributor_address, " MD ") ~  "Maryland",
+    str_detect(contributor_address, " MA ") ~  "Massachusetts",
+    str_detect(contributor_address, " MI ") ~  "Michigan",
+    str_detect(contributor_address, " MN ") ~ "Minnesota",
+    str_detect(contributor_address, " MS ") ~  "Mississippi",
+    str_detect(contributor_address, " MO ") ~  "Missouri",
+    str_detect(contributor_address, " MN ") ~  "Montana",
+    str_detect(contributor_address, " NE ") ~  "Nebraska",
+    str_detect(contributor_address, " NV ") ~ "Nevada",
+    str_detect(contributor_address, " NH ") ~ "New Hampshire",
+    str_detect(contributor_address, " NJ ") ~ "New Jersey",
+    str_detect(contributor_address, " NM ") ~ "New Mexico",
+    str_detect(contributor_address, " NY ") ~  "New York",
+    str_detect(contributor_address, " NC ") ~ "North Carolina",
+    str_detect(contributor_address, " ND ") ~ "North Dakota",
+    str_detect(contributor_address, " OH ") ~ "Ohio",
+    str_detect(contributor_address, " OK ") ~ "Oklahoma",
+    str_detect(contributor_address, " OR ") ~ "Oregon",
+    str_detect(contributor_address, " PA ") ~ "Pennsylvania",
+    str_detect(contributor_address, " RI ") ~ "Rhode Island",
+    str_detect(contributor_address, " SC ") ~ "South Carolina",
+    str_detect(contributor_address, " SD ") ~ "South Dakota",
+    str_detect(contributor_address, " TN ") ~ "Tennessee",
+    str_detect(contributor_address, " TX ") ~ "Texas",
+    str_detect(contributor_address, " UT ") ~ "Utah",
+    str_detect(contributor_address, " VT ") ~ "Vermont",
+    str_detect(contributor_address, " VA ") ~ "Virginia",
+    str_detect(contributor_address, " WA ") ~ "Washington",
+    str_detect(contributor_address, " WV ") ~ "West Virginia",
+    str_detect(contributor_address, " WI ") ~ "Wisconsin",
+    str_detect(contributor_address, " WY ") ~ "Wyoming",
+    str_detect(contributor_address, " DC ") ~ "Washington DC",
+    TRUE ~ contributor_address
+  ))
+```
+
+```{r}
+states_moore %>%
+group_by(contributor_state) %>%
+summarise(total_state = sum(contribution_amount),
+            mean_amount= mean(contribution_amount),
+          n=n()) %>%
+arrange(desc(total_state))
+```
+
+```{r}
+states_moore_no_md <- states_moore %>%
+  filter(!str_detect(contributor_state, "Maryland"))
+```
+
+```{r}
+states_moore_no_md %>%
+  summarise(total_state_amount = sum(contribution_amount),
+          mean_amount= mean(contribution_amount),
+          number_of_contribs=n())%>%
+arrange(desc(total_state_amount))
 ```
 
 ### Sentence 4
