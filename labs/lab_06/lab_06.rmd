@@ -1,0 +1,349 @@
+---
+title: "lab_06"
+author: "derek willis"
+date: "10/18/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## You will need
+
+* Tabula
+
+## Load libraries and establish settings
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+library(tidyverse)
+library(janitor)
+library(dplyr)
+
+# Load the libraries you will need
+
+```
+
+## Get Our PDF
+
+We'll be working with the [Maryland monthly voter registration update](https://elections.maryland.gov/pdf/vrar/2022_09.pdf) from the State Board of Elections. You'll want to download it to a place you'll remember (like your Downloads folder, or the labs folder in your repository). The goal is to write a couple of paragraphs that summarize the changes in voter registration in Maryland during the month of September.
+
+## Setup Tabula
+
+Start Tabula, then go to http://127.0.0.1:8080/ in your browser. Click the "Browse" button and find the PDF file and click "open", and then click the "Import button" in Tabula. This will take a few seconds.
+
+This PDF has multiple possible tables to extract. We're going to make four dataframes: new registrations by party, removals by party, changes in registration and current registrations by county. You will need to draw boxes around four sections and export four CSV files that you will load into R. In Tabula, draw a box around the borders of those tables and click the "Preview & Export Extracted Data" button for each one. The export should look pretty clean.
+
+Export each CSV (each one should be called `tabula-2022-09.csv` by default, so you should rename them for clarity) to your lab_06/data folder.
+
+From there, you will need to read in and clean up the data, and in particular the headers. You can choose to include the headers from the PDF in your exported CSV files OR to exclude them and add them when importing. `read_csv` allows us to do this ([and more](https://readr.tidyverse.org/reference/read_delim.html)).
+
+## Load and clean up the data in R
+
+You will need to read in and clean up the data so that it can be used for analysis. By "clean" I mean the column headers should not contain spaces and they should have meaningful names, not "x1" or something similar. The current registrations dataframe *MUST* include the county name, but should not include the columns under `Changes` and `Party Affiliation From`. How you do that is up to you (and could involve something outside R), but you can use select() with or without the minus sign to include or exclude certain columns. You also can use the `rename` function to, well, rename columns.
+
+```{r}
+# Party registrations
+party_registrations <- read_csv("data/new registrations.csv")
+```
+
+```{r}
+party_registrations <- party_registrations %>%
+  rename(SUMMARY = ...1) 
+```
+
+```{r}
+# Removals
+removals <- read_csv("data/removals.csv")
+```
+
+```{r}
+removals <- removals %>%
+  rename(SUMMARY = ...1) %>%
+  drop_na()
+```
+
+```{r}
+# Changes
+party_changes <- read_csv("data/party affiliation.csv")
+```
+
+```{r}
+party_changes <- party_changes %>%
+  rename(COUNTY = ...1)
+```
+
+```{r}
+# Current registrations
+active_registrations <- read_csv("data/active registration.csv")
+```
+
+```{r}
+active_registrations <- active_registrations %>%
+  rename(COUNTY = ...1)
+```
+
+## Rinse, Repeat: September 2020 data
+
+Do all of that again, for the [September 2020 voter registration update](https://elections.maryland.gov/pdf/vrar/2020_09.pdf), so we can compare the two. If you've done well, this is easy: just do the same steps in Tabula, export the files and use the same code to read in and clean up the data, *just remember to give these dataframes different names*, although similar enough so that you know how to compare September 2022 to September 2020.
+
+To answer the following questions, you'll need to calculate percentages and do other calculations. Whether you do that by combining or joining dataframes or you write code to run separately on both is up to you.
+
+```{r}
+# Party registrations
+tw_party_registrations <- read_csv("data/20_new_registration.csv")
+```
+
+```{r}
+tw_party_registrations <- tw_party_registrations %>%
+  rename(SUMMARY = ...1) 
+```
+
+```{r}
+# Removals
+tw_removals <- read_csv("data/20_removals.csv")
+```
+
+```{r}
+tw_removals <- tw_removals %>%
+  rename(SUMMARY = ...1) %>%
+  drop_na()
+```
+
+```{r}
+# Changes
+tw_party_changes <- read_csv("data/20_party_affiliation.csv")
+```
+
+```{r}
+tw_party_changes<- tw_party_changes %>%
+  rename(COUNTY = ...1)
+```
+
+```{r}
+# Current registrations
+tw_active_registrations <- read_csv("data/twe_active_registration.csv")
+```
+
+```{r}
+tw_active_registrations <- tw_active_registrations %>%
+  rename(COUNTY = ...1)
+```
+
+## Answer questions
+
+Q1. Calculate the percentage of registered Democrats, Republicans and unaffiliated voters for the entire state in September 2022 and September 2020, and then calculate the percentage change for those three party categories (the formula for percentage change is easy to remember: (New-Old)/Old). How would you describe the changes in these partisan categories in a story? What's the most interesting thing about these changes that would be the lede of that story?
+
+A1. 
+The percentage changes showed that there was a decrease in the number of active registered Democrats and Republicans when comparing Sept. 2022 to Sept. 20. I think one of the most interesting changes that could make for a good lede is focusing on the increase in unaffiliated voters. Why is this and what does it mean?
+
+Democrat Percent Change- -1.64
+Republican Percent Change- -2.1
+Unaffiliated Percent Change- 7.96
+
+###did  not work, but rightish idea with the values###
+sept_2020_dems <- active_registrations
+    names = c("DEM", "REP", "UNAF")
+    stringsAsFactors = FALSE
+
+```{r}
+
+voters_2020 <- 4106456
+voters_2022 <- 4161637
+
+dems_2020 <- 2258099
+dems_2022 <- 2250961
+
+reps_2020 <- 1016031
+reps_2022 <- 998905
+
+unaf_2020 <- 769201
+unaf_2022 <- 841573
+```
+
+```{r}
+dems_perc_2020 <- (dems_2020/voters_2020*100)
+rep_perc_2020 <- (reps_2020/voters_2020*100)
+unaf_perc_2020 <- (unaf_2020/voters_2020*100)
+
+dems_perc_2022 <- (dems_2022/voters_2022*100)
+rep_perc_2022 <- (reps_2022/voters_2022*100)
+unaf_perc_2022 <- (unaf_2022/voters_2022*100)
+```
+
+```{r}
+dems_perc_change <- ((dems_perc_2022-dems_perc_2020)/dems_perc_2020*100)
+rep_perc_change <- ((rep_perc_2022-rep_perc_2020)/rep_perc_2020*100)
+unaf_perc_change <- ((unaf_perc_2022-unaf_perc_2020)/unaf_perc_2020*100)
+```
+
+Q2. Among the Maryland jurisdictions with the most registered voters, which one had the biggest percentage increase in unaffiliated voters between 2020 and 2022? How did that county vote for governor in 2018 and for president in 2020? Contrast the partisan percentages of that county with the county that had the second-largest percentage increase in unaffiliated voters. You should display information from the data that shows the counties with the largest percentage increase first.
+
+A2. Based on my calculations, Montgomery County had the biggest percentage increase in unaffiliated voters between 2020 and 2022. It increased from 3.61% in 2020 to 3.86% in 2022. This increase was very similar to the increase Prince George's Co. saw, it was only slightly lower than Montgomery. It went from 1.87% to 2.07%.
+
+In 2018, 54.85% of voters in Montgomery County voted for the Jealous-Turnbull ticket in the governor's race. In 2020, 78.6% of voters in Montgomery County voted for Biden/Harris.
+
+Based off the two new datasets I made to quickly compare the two counties in both years, it looks like Montgomery County has a significantly larger amount of Republicans and unaffiliated than Prince George’s County does. It also has less Democrats, but not nearly as big of a difference. The other parties compare relatively similarly.  
+
+Unaffiliated Percents:
+Montgomery Co.
+2020- 3.61%
+2022- 3.86%
+
+Prince George's Co.
+2020- 1.87%
+2022- 2.07%
+
+Baltimore Co. 
+2020- 2.46%
+2022- 2.61%
+
+```{r}
+filtered_active_registrations <- active_registrations %>% 
+  select(COUNTY, TOTAL) %>%
+  arrange(desc(TOTAL))
+```
+
+```{r}
+filtered_tw_active_registrations <- tw_active_registrations %>% 
+  select(COUNTY, TOTAL) %>%
+  arrange(desc(TOTAL))
+```
+
+```{r}
+montgom_unaf_20 <- 148284
+pgco_unaf_20 <- 76989
+baltico_unaf_20 <- 100948
+
+montgom_unaf_22 <- 160577
+pgco_unaf_22 <- 86155
+baltico_unaf_22 <- 108672
+```
+
+``` {r}
+montgomery_unaf_perc_20 <- (montgom_unaf_20/county_total_20*100)
+pgco_unaf_20 <- (pgco_unaf_20/county_total_20*100)
+baltico_unaf_20 <- (baltico_unaf_20/county_total_20*100)
+
+montgomery_unaf_22 <- (montgom_unaf_22/county_total_22*100)
+pgco_unaf_22 <- (pgco_unaf_22/county_total_22*100)
+baltico_unaf_22 <- (baltico_unaf_22/county_total_22*100)
+```
+
+```{r}
+pg_mont_22_active_reg <- active_registrations %>% 
+  filter(COUNTY == "MONTGOMERY" | COUNTY == "PR. GEORGE'S")
+```
+
+```{r}
+pg_mont_20_active_reg <- tw_active_registrations %>% 
+  filter(COUNTY == "MONTGOMERY" | COUNTY == "PR. GEORGE'S")
+```
+
+
+Q3. Do the party percentages of new registrants (% Dem, % Rep, % Unaffiliated) from September 2022 and September 2020 match the overall percentage of partisan registration in the state at those times? In other words, did new registrants mirror the overall partisan composition of the electorate, or were they different? Do any of the methods of registration vary significantly from the overall partisan pattern? Which method is worthy of further exploration?
+
+A3. Based on my calculations, it seems that the new registrants partisanship pretty closely mirrored the active registrants. There were some slight increases and decreases, but nothing that would lead me to say their patterns were different. The most notable change was in unaffiliated voters. it wasn't a big difference but the numbers there varied from new reg. to active numbers. I am interested in knowing more about voters who registered through an ERI  report, the numbers are small but I wam very interested in knowing more about it and how people register that way. I was also intrigued by what "NVRA BY MAIL" by mail meant and wanted to know more. A quick Google search gave me a more solid answer for it, and I now know that it's just the the National Mail Voter Registration Form.
+
+```{r}
+party_reg_2020 <- 63684
+party_reg_2022 <- 37623
+
+dems_party_reg_2020 <- 32833
+dems_party_reg_2022 <- 19428
+
+reps_party_reg_2020 <- 12767
+reps_party_reg_2022 <- 5661
+
+unaf_party_reg_2020 <- 16235
+unaf_party_reg_2022 <- 11513
+```
+
+```{r}
+dems_party_perc_reg_2020 <- (dems_party_reg_2020/party_reg_2020*100)
+rep_party_perc_2020 <- (reps_party_reg_2020/party_reg_2020*100)
+unaf_party_perc_2020 <- (unaf_party_reg_2020/party_reg_2020*100)
+
+dems_party_perc_2022 <- (dems_party_reg_2022/party_reg_2022*100)
+rep_party_perc_2022 <- (reps_party_reg_2022/party_reg_2022*100)
+unaf_party_perc_2022 <- (unaf_party_reg_2022/party_reg_2022*100)
+```
+
+Party Percentages of New Registrants:
+Dems 2020- 51.56%
+Dems 2022- 51.64%
+
+Rep 2020- 20.05%
+Rep 2022- 15.1%
+
+Unaf 2020- 25.49%
+Unaf 2022- 30.61%
+
+Active Registration Percents:
+Dems 2020- 54.99%
+Dems 2022- 54.09%
+
+Rep 2020- 24.74%
+Rep 2022- 24%
+
+Unaf 2020- 18.73%
+Unaf 2022- 20.22%
+
+Q4. Choose your own adventure! Using both the 2022 and 2020 data for one of the dataframes (changes, removals or new registrations), ask and answer a question that makes at least one comparison and requires code to answer. That could involve calculating a percentage, percentage change or the raw difference between two columns.
+
+A4. 
+
+QUESTION: How does the percent of active registered voters in the top three counties in Maryland in Sept. 2022 compare to that month in 2020? Will the top three counties be the same in both years? 
+
+ANSWER: The top three counties with the highest amounts of registered voters remained Montgomery, Prince George's and Baltimore Co. in both 2020 and 2022. The percent of registered voters in those counties in 2022 compares very well to the percent in 2020. The difference is minimal.
+
+Montgomery Co.
+2020- 16.41%
+2022- 16.38%
+
+Prince George's Co.
+2020- 14.67%
+2022- 14.48%
+
+Baltimore Co. 
+2020- 13.77%
+2022- 13.66%
+
+```{r}
+county_total_22 <- 4161637
+montgomery_22 <- 681531
+prince_georges_22 <- 602534
+baltimore_co_22 <-568644
+
+county_total_20 <- 4106456
+montgomery_20 <- 673853
+prince_georges_20 <- 602548
+baltimore_co_20 <-565621
+```
+
+```{r}
+county_total_22 <- 4161637
+montgomery_22 <- 681531
+prince_georges_22 <- 602534
+baltimore_co_22 <-568644
+
+county_total_20 <- 4106456
+montgomery_20 <- 673853
+prince_georges_20 <- 602548
+baltimore_co_20 <-565621
+```
+
+``` {r}
+montgomery_perc_2020 <- (montgomery_20/county_total_20*100)
+pgco_perc_2020 <- (prince_georges_20/county_total_20*100)
+baltico_perc_2020 <- (baltimore_co_20/county_total_20*100)
+
+montgomery_perc_2022 <- (montgomery_22/county_total_22*100)
+pgco_perc_2022 <- (prince_georges_22/county_total_22*100)
+baltico_perc_2022 <- (baltimore_co_22/county_total_22*100)
+```
+
+Q5. What's the best story idea or question you've seen as a result of the work you've done in this lab?
+
+A5. I really like the idea of looking into the different ways constituents vote. I think a story analyzing how voters have changed their methods over the years and how that happens/why it happens would be incredibly interesting. It would be a great way to look back at the history of a community and see how it changes, finding patterns — good and bad — can make for some cool stories..
