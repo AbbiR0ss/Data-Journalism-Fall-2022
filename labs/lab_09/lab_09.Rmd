@@ -1,0 +1,206 @@
+---
+title: "lab_09"
+author: "Derek Willis"
+date: "11/09/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## You will need
+
+* the tidyverse, janitor and tigris libraries
+* you might choose to use the tidycensus library for Q4
+
+## Load libraries and establish settings
+
+**Task** Create a codeblock and load appropriate packages and settings for this lab.
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load libraries
+library(tidyverse)
+library(sf)
+library(janitor)
+library(tidycensus)
+library(tigris)
+```
+
+Let's explore the election results from last night and make some maps! 
+
+## Questions 
+
+**Q1.** Make a county-level map of Maryland's results for governor using `md_gov_county.csv` in the data folder, calculating the difference between Wes Moore's percentage of the total votes and Dan Cox's percentage of the total votes and displaying that percentage difference on the map. What is the story here, and what is the county with the most interesting results?
+
+**A1.**  
+I think Caroline County has the most interesting results since it's the only one in Eastern MD that overwhelmingly supported Cox. I think the story is there and why that is. Is it because the area is more rural or less populated? The other two counties that supported Cox in that way are on the Western edge of the state and are further removed from the major Democratic areas like Baltimore City and PG County, which makes sense to me.
+```{r}
+md_gov_results <- read_csv("data/md_gov_county.csv")
+glimpse(md_gov_results)
+```
+
+```{r}
+md_total_gov <- md_gov_results %>%
+  mutate(total_votes = Moore + Cox + Lashar + Wallace + Harding + `Write-ins`)
+```
+
+```{r}
+gov_percentages <- md_total_gov %>%
+  mutate(moore_perc= Moore/total_votes*100) %>%
+  mutate(cox_perc= Cox/total_votes*100)
+```
+
+```{r}
+gov_diff <- gov_percentages %>%
+  mutate(gov_diff=moore_perc-cox_perc)
+gov_diff
+```
+
+```{r}
+counties <- counties()
+glimpse(counties)
+```
+
+```{r}
+md_counties <- counties %>%
+  filter(STATEFP == "24") %>%
+  mutate(GEOID = as.numeric(GEOID))
+
+head(md_counties)
+```
+
+```{r}
+counties_joined <- md_counties %>% inner_join(gov_diff)
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=counties_joined, aes(fill=gov_diff)) +
+  theme_minimal()+
+  scale_fill_viridis_b(option="magma")
+```
+
+
+
+**Q2.** Make another map showing the difference between Dan Cox's county-level performance in 2022 and Larry Hogan's in 2018, using percentages to compare the two as you did in Q1. You can use the dataframe you initially loaded for Q1, and you'll need to load the 2018 governor results in the data folder and join them to it before proceeding. Are there any counties where Cox got a higher percentage than Hogan? How would you describe the map showing the Hogan-Cox difference?
+
+Also answer this: is a map the best way to present this data? What else could you make that might convey more information?
+
+**A2.** 
+There were no counties where Cox beat Hogan, some counties were close though, such as in Somerest. The map shows that Hogan for the most part was overwhelmingly more voted for than Cox, especially in counties in the middle of the state, where a large percentage of Dems were.
+
+I struggle with the maps personally, but I don't think this is a terrible way to display the data. I also think some type of chart, maybe like a scatter plot, could work if done correctly.
+
+```{r}
+md_2018_gov_results <- read_csv("data/md_gov_county_18.csv")
+glimpse(md_2018_gov_results)
+```
+
+```{r}
+md_2018_total_gov <- md_2018_gov_results %>%
+  mutate(total_votes = Hogan + Jealous + Quinn + Schlakman + `Write-ins`)
+```
+
+```{r}
+gov_2018_percentages <- md_2018_total_gov %>%
+  mutate(hogan_perc= Hogan/total_votes*100)
+```
+
+```{r}
+gov_2018_join<- gov_2018_percentages %>% left_join(gov_percentages, by = "GEOID")
+gov_2018_join
+```
+```{r}
+gov_2018_2022_perc_diff <- gov_2018_join %>%
+  mutate(gov_18_diff=hogan_perc-cox_perc)
+```
+
+```{r}
+counties_18_22_joined <- md_counties %>% inner_join(gov_2018_2022_perc_diff)
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=counties_18_22_joined, aes(fill=gov_18_diff)) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma")
+```
+
+**Q3** Which county has the highest percentage of mail ballots remaining to be counted? Using the `mail_remaining.csv` file in the data folder, calculate the percentage of mail ballots remaining, then map a county map of those percentages. Looking at both the map and the data, are there counties where the candidate currently leading the governor's race could, in theory, change?
+
+**A3** 
+
+I'm struggling with reading these maps. but I think any of the counties where the percentage is 100% could change in theory since it seems to mean 100% of their returns have not been counted. I think that Baltimore County has the highest number of remaining returned ballots to be counted, it has 100% remaining like others, but also has the highest number of returned at 63,375.
+
+```{r}
+remaining_mail_ballots <- read_csv("data/mail_remaining.csv")
+remaining_mail_ballots
+```
+
+```{r}
+total_mail_ballots <- remaining_mail_ballots %>%
+  mutate(percent_remaining= Remaining/Total_Returned*100)
+total_mail_ballots
+```
+```{r}
+ballots_joined_GEOID<- md_counties %>% left_join(total_mail_ballots, by = "GEOID")
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=ballots_joined_GEOID, aes(fill=percent_remaining)) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma")
+```
+
+
+
+**Q4.** Choose your own map adventure! In the data folder I've included county-level results for several other 2022 contests, including the Comptroller, Attorney General and the marijuana legalization amendment. I've also added the 2020 presidential results by county. Using one of the 2022 races that we haven't already used and at least one other contest for comparison, make a county-level map showing what you think is the most interesting aspect of that data, and describe the results in terms of a possible story. You can bring in other data, such as Census information, if you like.
+
+**A4.**  
+I wanted to compare the counties that supported Cox as well as legalizing marijuana. While Cox did not win, I thought it would be interesting to see if there is any overlap on the counties that supported him and also wanted recreational weed.
+
+If my map worked out the way I wanted it to, it should be showing the counties where both Cox and the measure to legalize marijuana were voted in favor of. If I'm reading it correctly, then the darkest counties are where the biggest separation in support occurred. Such as in Prince George's Co. where around 71% supported the measure and only 9% supported Cox. This means the county that supported Cox the most and the measure the least was Garrett County, which was 47% in favor of the measure and 79% in favor of Cox. It's interesting that the measure still had an almost 50% approval rating. Counties in the orange and pink are what I was originally wanting to know about, although it ended up being the extremes I found more interesting.
+
+Many counties were relatively close in their support of Cox and the measure, including Dorchester which was the closest to an even split with about 60% in favor of the measure and 62% in favor of Cox. This information could open doors to a story on what these middle ground counties are like and why they're voting in favor of a Conservative governor but are supporting socially liberal measures such as recreational weed. It would be interesting to see if it showed a change in values among Republican voters or if it's something else.
+
+
+
+```{r}
+marijuana_county <- read_csv("data/md_marijuana_county_changed.csv")
+```
+
+```{r}
+marijuana_county_total <- marijuana_county %>%
+  mutate(total= Favor + Against) %>%
+  mutate(favor_perc= Favor/total*100) %>%
+  mutate(against_perc= Against/total*100)
+marijuana_county_total
+```
+
+```{r}
+weed_cox_joined <- marijuana_county_total %>% left_join(gov_percentages, by = "GEOID")
+```
+
+```{r}
+weed_cox_perc <- weed_cox_joined %>%
+  mutate(cox_favor_diff= cox_perc - favor_perc)
+weed_cox_perc
+```
+
+```{r}
+marijuana_cox_counties<- md_counties %>% left_join(weed_cox_perc, by = "GEOID")
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=marijuana_cox_counties, aes(fill=cox_favor_diff)) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma")
+```
+
+-30-
