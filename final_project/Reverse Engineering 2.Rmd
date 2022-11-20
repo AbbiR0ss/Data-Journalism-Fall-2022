@@ -1,11 +1,9 @@
 ---
 title: "Reverese Engineering Round 2"
 author: "Abbi Ross, Ryan Mercado, Sununu Bah, Dylan Manfre"
-date: "11/11/2022"
+date: "11/19/2022"
 output: html_notebook
 ---
-
-
 #Loading libraries
 ```{r}
 library(tidyverse)
@@ -85,7 +83,7 @@ elrich_18_contribs <- elrich_18_data %>%
 ```
 
 ```{r}
-blair_22_contribs_2022 <- blair_22_data %>%
+blair_22_contribs <- blair_22_data %>%
   clean_names() %>%
   mutate(contribution_date = mdy(contribution_date)) %>%
   select(-x13)
@@ -120,7 +118,7 @@ dem_18_precincts_clean <- dem_18_precinct_results %>%
   clean_names()
 ```
 
-#Week Two Update:
+# Week Two Update:
 We  feel relatively comfortable with the data that we were able to find and download this week. Cleaning it was not that time consuming and it seems that we have all of the information we will need, other than the 2022 county results data and some iffy things surrounding mail/absentee ballots. Our first two questions are about self-funding and top contributors, which at this point do not seem like they should be an issue. Our third question is supposed to look at early voting and mail in votes. Right now it looks like the second half of the problem could be an issue. If so, we can tweak the question to focus solely on early votes and dive deeper into that.
 
 Our other questions are about campaign finances going toward ads and precinct level data, both of which we should be good to go on.
@@ -132,3 +130,132 @@ We chose these years because Elrich and Blair ran for the same position in both.
 Other than the one data set not including all of the information we need, we're not seeing any major reasons that won't be able to complete our work. We did see where we will have to do something similar to our first project, where the state is identified by acronym instead of it's full name, so we will have to change that.
 
 Ryan did try to create a 2022 county result sheet, but we cannot get it to load.
+
+# Week 3 Update
+
+If all is correct, we successfully ran the code for our first two questions this week. These questions looked at Blair and Elrich's self-funding when it came to their campaigns and their top contributors. We were a little shocked at first when we saw that Blair's top five contributors were all family members or himself. We started answering our questions and what this means, but we do still need to look up all of the people who donated to Elrich and see if we can find out who they are and if they are a significant connection.
+
+We also looked ahead to question 3. This question might require some tweaking. It's abotu mail in ballots and those votes are grouped a little differently in the 2018 county data, where just provisional votes are listed. In the 2022 data there are mail in and provisional. We believe that we will just have combine the mail in and provisional columns for the '22 data, which seems simple enough.
+
+# Question 1 Attempt 1
+
+How much money did David Blair and Marc Elrich fund themselves in 2022 vs. 2018? Blair is a businessman and millionaire, so it makes sense that he’s funding his own campaign. But how much exactly is he putting into it, and how does it compare to the past election and to how much Elrich’s campaign is raising?
+
+# Answer 1:
+Blair contributed $6,386,000 to his own campaign in 2022, while he contributed $7,630,576 in 2018.
+
+Elrich contributed $3,275 to his campaign in 2022, making himself the second largest contributor to his campaign that year. In 2018 he contributed $150 to himself.
+
+```{r}
+blair_22_contribs_self <- blair_22_contribs %>%
+filter(contributor_name == "BLAIR  DAVID  THOMAS") %>%
+group_by(contributor_name) %>%
+summarize(total_blair = sum(contribution_amount))
+```
+
+```{r}
+blair_18_contribs_self <- blair_18_contribs %>%
+filter(contributor_name == "BLAIR  DAVID  THOMAS") %>%
+group_by(contributor_name) %>%
+summarize(total_blair = sum(contribution_amount))
+```
+
+```{r}
+elrich_22_contribs_self <- elrich_22_contribs %>%
+filter(contributor_name == "Elrich  Marc") %>%
+group_by(contributor_name) %>%
+summarize(total_elrich = sum(contribution_amount))
+```
+
+```{r}
+elrich_18_contribs_self <- elrich_18_contribs %>%
+filter(contributor_name == "Elrich  Marc") %>%
+group_by(contributor_name) %>%
+summarize(total_elrich = sum(contribution_amount))
+```
+
+#Question 2, Attempt #1:
+Who were the top 5 contributors to Blair and Elrich in 2022? How about in 2018? What are their connections to the candidates?
+
+#Answer Atempt 1:
+
+Blair's Top 5 for 2018
+1.) David  Blair- $10,532,216
+2.) Alice M Blair $6,000
+3.) Andrew Blair- $6,000
+4.) Jennifer Blair- $6,000
+5.) Thomas L.Blair- $6,000
+
+Blair's Top 5 for 2022
+1.) David  Thomas Blair- $6,386,000
+2.) Nelson Carbonell- $6,195
+3.) Assal  Ethan- $6,000
+4.) Alice Marjorie Blair- $6,000
+5.) Thomas Blair- $6,000
+
+All but one of Blair's top contributors from both years was not a family member, or himself. This was both surprising and not surprising. Who better to support a self funded bid for office than wealthy family members? If our Google search was correct, Nelson Carbonell is a GW University alumni and the president and CEO of consulting firm, Nelson Carbonell & Associates.
+
+Elrich's Top 5 for 2018
+1.) Montgomery County Government- $1,227,980
+2.) Edward Redish- $1,000
+3.) Tsega Haile- $300
+4.) Anne Kaiser- $300
+5.) Eden Durbin- $250
+
+Elrich's Top 5 for 2022
+1.) Montgomery County Government- $836,776
+2.) March ELrich- $3,275
+3.) Alfred Clark- $500
+4.) Margaret Dennis-  $500
+5.) Peter Kahn- $500
+
+Elrich's top contributor in both campaigns was the Montgomery County Gov., which makes sense given that he was a part of a matching funds program. In 2022, he was the second top contributor, which was a little surprising. His second top contributor in 2018 is a Research Professor & Professor Emeritus of physics at the University of Maryland.
+
+```{r}
+top_elrich_18 <- elrich_18_contribs %>%
+  group_by(contributor_name) %>%
+  summarize(total = sum(contribution_amount)) %>%
+  arrange(desc(total))%>%
+  head(5)
+```
+
+```{r}
+top_elrich_22 <- elrich_22_contribs %>%
+  group_by(contributor_name) %>%
+  summarize(total = sum(contribution_amount)) %>%
+  arrange(desc(total))%>%
+  head(5)
+```
+
+```{r}
+top_blair_22 <- blair_22_contribs %>%
+  mutate(contributor_name = case_when(
+    contributor_name == "BLAIR  DAVID  THOMAS" ~ "Blair  David  Thomas",
+    TRUE ~ contributor_name
+  )) %>%
+  group_by(contributor_name) %>%
+  summarize(total = sum(contribution_amount)) %>%
+  arrange(desc(total)) %>%
+  head(5)
+```
+
+```{r}
+top_blair_18 <- blair_18_contribs %>%
+  mutate(contributor_name = case_when(
+    contributor_name == "BLAIR  DAVID  THOMAS" ~ "Blair  David  Thomas",
+    TRUE ~ contributor_name
+  )) %>%
+  group_by(contributor_name) %>%
+  summarize(total = sum(contribution_amount)) %>%
+  arrange(desc(total)) %>%
+  head(5)
+```
+
+#Looking ahead at question 3:
+
+#Q3) 
+David Blair got more early/election day votes in 2022. Elrich got more Mail-in votes in 2022. How did that compare to 2018? People want to know how Marc Elrich won both times, first by 72 voters in 2018 and then 32 in 2022. Where did Marc do well in the three categories: Early voting, election day, and mail-in votes. Did this sway the result at all?
+
+# Steps for next week
+
+Since the 2022 county data includes two mail in votes columns and two provisional votes columns, we will have to combine those all together, or at least in two seperate columns instead of four. We think the provisional and mail in can be put together since in 2018 there is no mail in column, it appears that it was still together that year. Which does make sense since it was before the pandemic.
