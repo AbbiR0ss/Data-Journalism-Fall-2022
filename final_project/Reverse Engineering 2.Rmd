@@ -9,6 +9,7 @@ output: html_notebook
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(sf)
 ```
 
 ```{r setup, include=FALSE}
@@ -118,6 +119,21 @@ dem_18_precincts_clean <- dem_18_precinct_results %>%
   clean_names()
 ```
 
+#Loading Expenses Data
+
+```{r}
+blair_22_exp_clean <- blair_22_expenses %>%
+  clean_names()
+```
+
+```{r}
+elrich_22_expenses <- read_csv("data/elrich_expenses_2022.csv")
+```
+
+```{r}
+elrich_22_exp_clean <- elrich_22_expenses %>%
+  clean_names()
+```
 # Week Two Update:
 We  feel relatively comfortable with the data that we were able to find and download this week. Cleaning it was not that time consuming and it seems that we have all of the information we will need, other than the 2022 county results data and some iffy things surrounding mail/absentee ballots. Our first two questions are about self-funding and top contributors, which at this point do not seem like they should be an issue. Our third question is supposed to look at early voting and mail in votes. Right now it looks like the second half of the problem could be an issue. If so, we can tweak the question to focus solely on early votes and dive deeper into that.
 
@@ -136,6 +152,23 @@ Ryan did try to create a 2022 county result sheet, but we cannot get it to load.
 If all is correct, we successfully ran the code for our first two questions this week. These questions looked at Blair and Elrich's self-funding when it came to their campaigns and their top contributors. We were a little shocked at first when we saw that Blair's top five contributors were all family members or himself. We started answering our questions and what this means, but we do still need to look up all of the people who donated to Elrich and see if we can find out who they are and if they are a significant connection.
 
 We also looked ahead to question 3. This question might require some tweaking. It's abotu mail in ballots and those votes are grouped a little differently in the 2018 county data, where just provisional votes are listed. In the 2022 data there are mail in and provisional. We believe that we will just have combine the mail in and provisional columns for the '22 data, which seems simple enough.
+
+#Week 4 Update
+
+This week we completed question 5, where found out that Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R). For this question we also wanted to look at his media expenses, where we found that $1,773 went to online advertising, which seemed low. His highest was television at $2,140,453. This makes sense given a lot of his voting demographic could be reached through television. It is interesting to see how much more he spent only to lose a second election so closely.
+
+Elrich spent significantly less than Blair, with $528,393.29One of his top media exprense was consulting fees, at around $32k which we found interesting. His biggest media expense was television though, the same as Blair
+
+We also worked on question 4, where we were able to find the .gdb file for Montgomery County boundaries which we loaded up and got a quick map for. We are stuck though for how to overlay the precincts onto that map. We are using pre-lab 9 as an example at the precinct map for that lab is already a gdb gile. We thought maybe Tigris was the best option, but that seems like a backward step since we're already looking at one county and have it on a map.
+
+Once we figure this out, we can put in out data and start answering questions about which part of the county voted for whom and what that says about the candidate's voters they attracted/demographics/etc.
+
+We also got part of the way through question 3, where we got the Elrich and Blair data seperated and bound together. For next week we need to chat with Derek about figuring out how to bring in the 2022 data, since the files for this year don't have them included for some reason. Once we have that, we fill confident about moving forward with the code.
+
+##Important Findings
+
+Some of the most important information we gathered this week is the difference in how they advertised. Blair went all out on advertising on most fronts, such as with television. He spent 4x as much on tv ads than Elrich. It shows an interesting dynamic between the millionaire Blair and the incumbent Elrich. 
+We know Blair has the money and the connections, but it's interesting to see that despite all of this it wasn't enough two campaigns in a row. Once we figure our map in Question 4, we are interested in looking at how where Blair had more votes looks like demographics wise.
 
 # Question 1 Attempt 1
 
@@ -259,3 +292,79 @@ David Blair got more early/election day votes in 2022. Elrich got more Mail-in v
 # Steps for next week
 
 Since the 2022 county data includes two mail in votes columns and two provisional votes columns, we will have to combine those all together, or at least in two seperate columns instead of four. We think the provisional and mail in can be put together since in 2018 there is no mail in column, it appears that it was still together that year. Which does make sense since it was before the pandemic.
+
+#Question 3 Answer Attempt 1
+
+```{r}
+ blair_18_votes <- dem_18_county_clean %>%
+filter(candidate_name == "David Blair")
+elrich_18_votes <-  dem_18_county_clean %>%
+  filter(candidate_name == "Marc Elrich")
+voting_totals_18 <-  bind_rows(blair_18_votes, elrich_18_votes)
+```
+
+#Question 4
+4. Which parts of the county voted for Elrich and which voted for Blair based on precinct-level voting? Are there differences in demographics of those areas? What about income? 
+
+
+```{r}
+precincts <- read_csv("data/election_precincts.csv")
+glimpse(precincts)
+```
+
+```{r}
+moco_boundaries <- st_read("data/moco.gdb")
+glimpse(moco_boundaries)
+```
+
+```{r}
+moco_boundaries %>%
+  ggplot() +
+  geom_sf() +
+  theme_minimal()
+```
+
+#Question 5
+
+```{r}
+blair_22_expenses <- read_csv("data/blair_expenses_2022.csv")
+```
+
+
+
+```{r}
+blair_22_exp_clean_grouped <- blair_22_exp_clean %>%
+  group_by(expense_category) %>%
+  summarize(total_category = sum(amount)) %>%
+  arrange(desc(total_category))
+```
+# Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R).
+
+#dive into media
+```{r}
+blair_expenses_22_medias <- blair_22_expenses %>%
+filter(Expense Category == "Media") %>%
+group_by(expense_purpose) %>%
+summarize(total_category = sum(amount)) %>%
+arrange(desc(total_category))
+
+blair_expenses_2022_medias
+```
+#Blair spent $1773.00 on online advertising
+
+```{r}
+elrich_exp_clean_grouped <- elrich_22_exp_clean %>%
+group_by(expense_category) %>%
+summarize(total_category = sum(amount)) %>%
+arrange(desc(total_category))
+```
+# Elrich spent $528393.29 on media which is significantly less than Blair
+
+```{r}
+elrich_22_exp_clean %>%
+filter(expense_category == "Media") %>%
+group_by(expense_purpose) %>%
+summarize(total_category = sum(amount)) %>%
+arrange(desc(total_category))
+```
+# Elrich spent 32K on consulting fees.
