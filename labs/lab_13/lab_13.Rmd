@@ -46,7 +46,6 @@ senate_results <- utah_results %>%
   html_table()
 
 # show the dataframe
-
 senate_results
 ```
 
@@ -59,7 +58,6 @@ senate_results <- utah_results %>%
 senate_results <- senate_results[[1]]
 
 # show the dataframe
-
 senate_results
 ```
 ```{r}
