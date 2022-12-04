@@ -214,24 +214,24 @@ titles <- cardin_results %>%
 ```
 
 ```{r}
-urls <-cardin_results %>% 
+urls <- cardin_results %>% 
   html_element('h3 a') %>%
   html_attr('href') %>% 
   as_tibble()
 ```
 
 ```{r}
-totals <-bind_cols(dates, titles, urls)
+totals <- bind_cols(dates, titles, urls)
 ```
 
 ```{r}
-totals_cleaned <-totals %>% 
+totals_cleaned <- totals %>% 
   clean_names() %>% 
   rename(date = 1, title = 2, url= 3)
 ```
 
 ```{r}
-totals_cleaned <-totals_cleaned %>%
+totals_cleaned <- totals_cleaned %>%
   mutate(date=mdy(date))
 ```
 
