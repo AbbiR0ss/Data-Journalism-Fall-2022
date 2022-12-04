@@ -49,6 +49,7 @@ senate_results <- utah_results %>%
 
 senate_results
 ```
+
 ```{r}
 senate_results <- utah_results %>%
   read_html() %>%
@@ -119,10 +120,10 @@ senate_18_results <- utah_2018_results %>%
   rename(county = 1, aalders = 2, bowden = 3, mccandless = 4, wilson = 5, romney = 6, fitzgerald = 7, reeve = 8, reiksthegn = 9, korb = 10, jackson = 11, judy = 12, jensen = 13) %>%
   mutate(aalders = as.numeric(gsub(",","", aalders))) %>%
   mutate(bowden = as.numeric(gsub(",","", bowden))) %>%
-  mutate(mccandless  = as.numeric(gsub(",","", mccandless)) %>%
+  mutate(mccandless  = as.numeric(gsub(",","", mccandless))) %>%
   mutate(wilson = as.numeric(gsub(",","", wilson))) %>%
-  mutate(romney = as.numeric(gsub(",","", fitzgerald))) %>%
-  mutate(fitzgerald = as.numeric(gsub(",","", lee))) %>%
+  mutate(romney = as.numeric(gsub(",","", romney))) %>%
+  mutate(fitzgerald = as.numeric(gsub(",","", fitzgerald))) %>%
   mutate(reeve = as.numeric(gsub(",","", reeve))) %>%
   mutate(reiksthegn = as.numeric(gsub(",","", reiksthegn))) %>%
   mutate(korb = as.numeric(gsub(",","", korb))) %>%
@@ -133,11 +134,20 @@ senate_18_results <- utah_2018_results %>%
 senate_18_results
 ```
 
+```{r}
+senate_18_results <- senate_18_results %>%
+  slice(-1)
+
+senate_results
+```
+
+
 Finally, join the two dataframes together:
 
 **Task** Join the 2022 and 2018 results into a single dataframe.
 
 ```{r}
+joined_results <- inner_join(senate_results, senate_18_results, by=c("county" = "county"))
 ```
 
 ## Questions
@@ -147,6 +157,9 @@ Finally, join the two dataframes together:
 **A1.** McMullin did better than Wilson in all but one county, San Juan, which has fewer than 15,000 people. In particular, McMullin did much better in Utah County, which includes Brigham Young University. McMullin got within 4,000 votes of Joe Biden's total in 2018 here.
 
 ```{r}
+wilson_mcmullin_diff <- joined_results %>%
+  select(county, mcmullin, wilson) %>%
+  mutate(diffr= mcmullin - wilson) 
 ```
 
 **Q2** Calculate the difference in votes between Mike Lee and Mitt Romney and save it your combined dataframe. Write up some sentences that could go in a story describing where Romney outperformed Lee and where he didn't. Mention the margins and describe the counties you mention (location, population or another factor).
@@ -154,6 +167,9 @@ Finally, join the two dataframes together:
 **A2** Romney got more votes in 13 of Utah's 29 counties, and in particular Salt Lake and Davis counties. In the counties where Lee outperformed Romney, the margin was a matter of less than a thousand votes in all but one case. Lee's best performance relative to Romney was in Washington County, a reliably conservative county.
 
 ```{r}
+lee_romney_diff <- joined_results %>%
+  select(county, lee, romney) %>%
+  mutate(diffr= lee - romney) 
 ```
 
 **Q3** Sen. Ben Cardin, D-Maryland, has posted hundreds of press releases at https://www.cardin.senate.gov/?post_type=press-releases. It would be great to have all of them in a dataframe that has the following columns: date, title and url.
@@ -166,8 +182,56 @@ When you're done, rename the columns so they make sense, then make sure the date
 
 Finally, tell me what questions you could ask of this data. Be creative.
 
-**A3** 
+**A3**
+I am curious about the 10 press releases that mentioned WMATA in the title. They almost all focus on safety improvements, with a few announcing funds for those improvements. I would be interested in a story on why there's so many safety pushes and if there are any out of the ordinary issues, or if it's just general push to make sure the public transit stays safe. I would also be interested in knowing about Cardin's relationship with WMATA. Is he putting out all of these releases like every other local politician or he is more actively involved in some ways?
+
+On a larger note, I think he could be interesting to search the data for a few key terms such railway, strike, safety, covid-19, etc. to see how often Cardin is putting out releases on certain things and if there's anything in particular he might have a focus on that I might not know as someone not from the area. 
+, 
+```{r}
+cardin_url <- "https://www.cardin.senate.gov/?post_type=press-releases"
+```
 
 ```{r}
+cardin_results <- cardin_url %>%
+  read_html()
 
+# show the result
+cardin_results
 ```
+
+```{r}
+dates <- cardin_results %>% 
+  html_elements('h5') %>% 
+  html_text() %>% 
+  as_tibble()
+```
+
+```{r}
+titles <- cardin_results %>% 
+  html_elements('h3') %>% 
+  html_text() %>% 
+  as_tibble()
+```
+
+```{r}
+urls <-cardin_results %>% 
+  html_element('h3 a') %>%
+  html_attr('href') %>% 
+  as_tibble()
+```
+
+```{r}
+totals <-bind_cols(dates, titles, urls)
+```
+
+```{r}
+totals_cleaned <-totals %>% 
+  clean_names() %>% 
+  rename(date = 1, title = 2, url= 3)
+```
+
+```{r}
+totals_cleaned <-totals_cleaned %>%
+  mutate(date=mdy(date))
+```
+
