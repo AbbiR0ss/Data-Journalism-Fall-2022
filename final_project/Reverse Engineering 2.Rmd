@@ -53,6 +53,10 @@ dem_22_precinct_results<- read_csv("data/Dem_Precincts_22.csv")
 ```
 This data set contains 18,298 rows and 13 columns. 
 
+```{r}
+correct_22_precinct_res<- read_csv("data/new_22_precincts.csv")
+```
+
 
 #Loading in the 2018 county data
 ```{r}
@@ -122,6 +126,10 @@ dem_18_precincts_clean <- dem_18_precinct_results %>%
 #Loading Expenses Data
 
 ```{r}
+blair_22_expenses <- read_csv("data/blair_expenses_2022.csv")
+```
+
+```{r}
 blair_22_exp_clean <- blair_22_expenses %>%
   clean_names()
 ```
@@ -134,6 +142,16 @@ elrich_22_expenses <- read_csv("data/elrich_expenses_2022.csv")
 elrich_22_exp_clean <- elrich_22_expenses %>%
   clean_names()
 ```
+
+```{r}
+election_results_22 <- read_csv("data/22_precincts.csv")
+```
+
+```{r}
+election_results_22 <- election_results_22 %>%
+  clean_names()
+```
+
 # Week Two Update:
 We  feel relatively comfortable with the data that we were able to find and download this week. Cleaning it was not that time consuming and it seems that we have all of the information we will need, other than the 2022 county results data and some iffy things surrounding mail/absentee ballots. Our first two questions are about self-funding and top contributors, which at this point do not seem like they should be an issue. Our third question is supposed to look at early voting and mail in votes. Right now it looks like the second half of the problem could be an issue. If so, we can tweak the question to focus solely on early votes and dive deeper into that.
 
@@ -289,11 +307,16 @@ top_blair_18 <- blair_18_contribs %>%
 #Q3) 
 David Blair got more early/election day votes in 2022. Elrich got more Mail-in votes in 2022. How did that compare to 2018? People want to know how Marc Elrich won both times, first by 72 voters in 2018 and then 32 in 2022. Where did Marc do well in the three categories: Early voting, election day, and mail-in votes. Did this sway the result at all?
 
-# Steps for next week
-
-Since the 2022 county data includes two mail in votes columns and two provisional votes columns, we will have to combine those all together, or at least in two seperate columns instead of four. We think the provisional and mail in can be put together since in 2018 there is no mail in column, it appears that it was still together that year. Which does make sense since it was before the pandemic.
-
 #Question 3 Answer Attempt 1
+
+While Blair had more early and election votes in 2022, he did not in 2018. His election day total in 2018 was 25,739 and his early votes total was 8,671. Elrich beat him by 161 election votes and 329 in early votes.
+
+
+
+```{r}
+correct_22_precinct_res <- correct_22_precinct_res %>%
+  clean_names()
+```
 
 ```{r}
  blair_18_votes <- dem_18_county_clean %>%
@@ -303,8 +326,20 @@ elrich_18_votes <-  dem_18_county_clean %>%
 voting_totals_18 <-  bind_rows(blair_18_votes, elrich_18_votes)
 ```
 
+#Q3 Answer Attempt 2 with New Data
+
+``` {r} 
+voting_totals_22 <- correct_22_precinct_res %>%
+filter(candidate_name == "David T. Blair" | candidate_name == "Marc Elrich") %>%
+group_by(candidate_name) %>%
+summarize(total_votes = sum(early_votes+election_night_votes+mail_in_ballot_1_votes+provisional_votes+mail_in_ballot_2_votes))
+```
+
+
+
 #Question 4
 4. Which parts of the county voted for Elrich and which voted for Blair based on precinct-level voting? Are there differences in demographics of those areas? What about income? 
+
 
 
 ```{r}
@@ -318,10 +353,141 @@ glimpse(moco_boundaries)
 ```
 
 ```{r}
-moco_boundaries %>%
-  ggplot() +
-  geom_sf() +
+moco_precincts_correct <- st_read("data/MontMD_2022/MontMD_2022.shp") %>%
+  st_zm(drop = TRUE)
+glimpse(moco_precincts_correct)
+```
+
+```{r}
+moco_precincts <- st_read("data/election_precincts/election_precincts.shp")
+glimpse(moco_precincts)
+```
+
+#Maps for Q4
+
+```{r}
+correct_22_precinct_res <- correct_22_precinct_res %>%
+  clean_names()
+```
+
+```{r}
+moco_22_pre_results_filtered <- correct_22_precinct_res %>%
+filter(candidate_name == "David T. Blair" | candidate_name == "Marc Elrich")
+moco_22_pre_results_filtered
+```
+
+```{r}
+blair_results_22_filter <- moco_22_pre_results_filtered %>% 
+  filter(candidate_name == "David T. Blair")
+blair_results_22_filter
+```
+
+```{r}
+blair_results_22_filter_total <-blair_results_22_filter%>% 
+  mutate(total_votes_blair = early_votes + election_night_votes + mail_in_ballot_1_votes + provisional_votes + mail_in_ballot_2_votes)
+blair_results_22_filter_total
+```
+
+```{r}
+blair_results_joined_2022<- inner_join(moco_precincts_correct, blair_results_22_filter_total, by=c("VOTESPRE"="election_district_precinct"))
+```
+
+###Blair Map####
+```{r}
+ggplot() +
+  geom_sf(data=blair_results_joined_2022, aes(fill=total_votes_blair)) +
+  scale_fill_viridis_b(option="magma")+
   theme_minimal()
+```
+####Elirich map####
+```{r}
+moco_22_pre_results_filtered_elrich <-correct_22_precinct_res %>%
+filter(candidate_name == "Marc Elrich")
+moco_22_pre_results_filtered_elrich
+```
+
+```{r}
+elrich_22_filtered_total <-moco_22_pre_results_filtered_elrich%>% 
+  mutate(total_votes_elrich = early_votes + election_night_votes + mail_in_ballot_1_votes + provisional_votes + mail_in_ballot_2_votes)
+elrich_22_filtered_total
+```
+
+```{r}
+elrich_results_joined_2022_map<- inner_join(moco_precincts_correct, elrich_22_filtered_total, by=c("VOTESPRE"="election_district_precinct"))
+```
+
+```{r}
+ggplot() +
+  geom_sf(data=elrich_results_joined_2022_map, aes(fill=total_votes_elrich)) +
+  scale_fill_viridis_b(option="magma")+
+  theme_minimal()
+```
+###percentage_change***
+```{r}
+correct_22_precinct_res <- correct_22_precinct_res %>%
+  clean_names() 
+```
+
+```{r}
+correct_22_executive <- correct_22_precinct_res %>%
+  filter(office_name == "County Executive") %>% 
+  mutate(candidate_total = early_votes + election_night_votes + mail_in_ballot_1_votes + mail_in_ballot_2_votes + provisional_votes)
+```
+
+```{r}
+combining_candidates <- correct_22_executive %>%
+  group_by(election_district_precinct) %>%
+  summarise(total_precinct_votes = sum(early_votes + election_night_votes + mail_in_ballot_1_votes + mail_in_ballot_2_votes + provisional_votes))
+```
+
+```{r}
+exec_combined_joined <- left_join(correct_22_executive, combining_candidates)
+exec_combined_joined
+```
+
+```{r}
+exec_joined_percentages <- exec_combined_joined %>%
+  mutate(candidate_percents = candidate_total/total_precinct_votes*100)
+exec_joined_percentages
+```
+
+```{r}
+pivot_candidates <- exec_joined_percentages %>%
+  select(election_district_precinct, candidate_name, candidate_percents, total_precinct_votes) %>% 
+  pivot_wider(names_from = candidate_name, values_from = candidate_percents, values_fill = 0) %>%
+  clean_names()
+```
+
+```{r}
+pivot_candidates_joined<- inner_join(moco_precincts_correct, pivot_candidates, by=c("VOTESPRE"="election_district_precinct")) %>%
+  mutate(blair_elrich_diff = david_t_blair - marc_elrich)
+```
+
+#Creating precinct percentage maps
+-negatives are where elrich won, so the dark
+
+```{r}
+ggplot() +
+  geom_sf(data=pivot_candidates_joined, aes(fill=blair_elrich_diff)) +
+  scale_fill_viridis_b(option="magma")+
+  theme_minimal()
+```
+
+
+```{r}
+
+pivot_candidates_joined<- inner_join(moco_precincts_correct, pivot_candidates, by=c("VOTESPRE"="election_district_precinct")) %>%
+  mutate(elrich_blair_diff = david_t_blair - marc_elrich) %>% 
+  filter(elrich_blair_diff >= 10)
+
+pivot_candidates_joined
+
+ggplot() +
+  geom_sf(data=moco_precincts_correct) +
+  geom_sf(data=pivot_candidates_joined, aes(fill=elrich_blair_diff)) +
+  scale_fill_viridis_b(option="magma")+
+  theme_minimal()
+```
 ```
 
 #Question 5
@@ -331,19 +497,20 @@ blair_22_expenses <- read_csv("data/blair_expenses_2022.csv")
 ```
 
 
-
 ```{r}
 blair_22_exp_clean_grouped <- blair_22_exp_clean %>%
   group_by(expense_category) %>%
   summarize(total_category = sum(amount)) %>%
   arrange(desc(total_category))
 ```
+
+
 # Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R).
 
 #dive into media
 ```{r}
 blair_expenses_22_medias <- blair_22_expenses %>%
-filter(Expense Category == "Media") %>%
+filter(expense category == "Media") %>%
 group_by(expense_purpose) %>%
 summarize(total_category = sum(amount)) %>%
 arrange(desc(total_category))
