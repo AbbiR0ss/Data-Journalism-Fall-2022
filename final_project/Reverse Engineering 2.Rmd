@@ -152,47 +152,86 @@ election_results_22 <- election_results_22 %>%
   clean_names()
 ```
 
-# Week Two Update:
-We  feel relatively comfortable with the data that we were able to find and download this week. Cleaning it was not that time consuming and it seems that we have all of the information we will need, other than the 2022 county results data and some iffy things surrounding mail/absentee ballots. Our first two questions are about self-funding and top contributors, which at this point do not seem like they should be an issue. Our third question is supposed to look at early voting and mail in votes. Right now it looks like the second half of the problem could be an issue. If so, we can tweak the question to focus solely on early votes and dive deeper into that.
+#Loading in precinct data
 
-Our other questions are about campaign finances going toward ads and precinct level data, both of which we should be good to go on.
+```{r}
+precincts <- read_csv("data/election_precincts.csv")
+glimpse(precincts)
+```
 
-The data sets we are analyzing are for two filing periods, 2022 and 2018.
+```{r}
+moco_boundaries <- st_read("data/moco.gdb")
+glimpse(moco_boundaries)
+```
 
-We chose these years because Elrich and Blair ran for the same position in both. The 2022 and 2018 campaign finance data sets are limited to any contributions made during that filing year. 
+```{r}
+moco_precincts_correct <- st_read("data/MontMD_2022/MontMD_2022.shp") %>%
+  st_zm(drop = TRUE)
+glimpse(moco_precincts_correct)
+```
 
-Other than the one data set not including all of the information we need, we're not seeing any major reasons that won't be able to complete our work. We did see where we will have to do something similar to our first project, where the state is identified by acronym instead of it's full name, so we will have to change that.
+```{r}
+moco_precincts <- st_read("data/election_precincts/election_precincts.shp")
+glimpse(moco_precincts)
+```
 
-Ryan did try to create a 2022 county result sheet, but we cannot get it to load.
+```{r}
+correct_22_precinct_res <- correct_22_precinct_res %>%
+  clean_names()
+```
 
-# Week 3 Update
+#Final Narrative
 
-If all is correct, we successfully ran the code for our first two questions this week. These questions looked at Blair and Elrich's self-funding when it came to their campaigns and their top contributors. We were a little shocked at first when we saw that Blair's top five contributors were all family members or himself. We started answering our questions and what this means, but we do still need to look up all of the people who donated to Elrich and see if we can find out who they are and if they are a significant connection.
+This includes our analysis of what we found and the highlights from the answers but not all of the parts. For full answers see Q1 Answer, Q2 Answer, etc. 
 
-We also looked ahead to question 3. This question might require some tweaking. It's abotu mail in ballots and those votes are grouped a little differently in the 2018 county data, where just provisional votes are listed. In the 2022 data there are mail in and provisional. We believe that we will just have combine the mail in and provisional columns for the '22 data, which seems simple enough.
+#(For previous weekly updates and important findings see bottom of the code)
 
-#Week 4 Update
+Montgomery County Executive incumbent Marc Elrich beat businessman David Blair for the second time in their bid for the Democratic nominee seat.
 
-This week we completed question 5, where found out that Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R). For this question we also wanted to look at his media expenses, where we found that $1,773 went to online advertising, which seemed low. His highest was television at $2,140,453. This makes sense given a lot of his voting demographic could be reached through television. It is interesting to see how much more he spent only to lose a second election so closely.
+Elrich beat Blair by 32 votes in 2022 and by 77 votes in 2018. Through data analysis of campaign finance information from the Federal Election Commission we were able to start analyzing how this came to be for a second time and gain a deeper understanding for two very different candidates.
 
-Elrich spent significantly less than Blair, with $528,393.29One of his top media exprense was consulting fees, at around $32k which we found interesting. His biggest media expense was television though, the same as Blair
+It’s no secret that Blair has the money to fund his own campaign, but it also helps when your family members are in the same position. Blair’s top campaign contributors for 2018 and 2022 included at least three other Blair’s. Their contributions, not including Blair’s own self-funding, totaled $24k in 2018 and $12k in 2022. Elrich’s top contributors, minus the county, only totaled $1,850 in 2018 and $4,775 in 2022.
 
-We also worked on question 4, where we were able to find the .gdb file for Montgomery County boundaries which we loaded up and got a quick map for. We are stuck though for how to overlay the precincts onto that map. We are using pre-lab 9 as an example at the precinct map for that lab is already a gdb gile. We thought maybe Tigris was the best option, but that seems like a backward step since we're already looking at one county and have it on a map.
+Blair contributed $6,386,000 to his own campaign in 2022, while he contributed $7,630,576 in 2018.
 
-Once we figure this out, we can put in out data and start answering questions about which part of the county voted for whom and what that says about the candidate's voters they attracted/demographics/etc.
+Elrich contributed $3,275 to his campaign in 2022, making himself the second largest contributor to his campaign that year. In 2018 he contributed $150 to himself. Most of Elrich’s funding came from Montgomery County, which makes sense as he was a part of a matching funds program. In 2018 they contributed $1,227,980 to his campaign and in 2022 they contributed $836,776. While still significant amounts of money, both years were much lower than Blair’s top contributions — which were both self-funded.
 
-We also got part of the way through question 3, where we got the Elrich and Blair data seperated and bound together. For next week we need to chat with Derek about figuring out how to bring in the 2022 data, since the files for this year don't have them included for some reason. Once we have that, we fill confident about moving forward with the code.
+This makes their campaign finance spending all the more interesting.
 
-##Important Findings
+We wanted to know where these candidates were spending the big bucks when it came to getting their name out there. We focused on 2022 and were unsurprised to find that Blair blew Elrich out of the park, with $3.1 million in spending compared to Elrich’s $528,393. His top expenses were media, salaries and Direct Mail by Mail House
 
-Some of the most important information we gathered this week is the difference in how they advertised. Blair went all out on advertising on most fronts, such as with television. He spent 4x as much on tv ads than Elrich. It shows an interesting dynamic between the millionaire Blair and the incumbent Elrich. 
-We know Blair has the money and the connections, but it's interesting to see that despite all of this it wasn't enough two campaigns in a row. Once we figure our map in Question 4, we are interested in looking at how where Blair had more votes looks like demographics wise.
+Elrich beat Blair by a slim 32 votes. Was it all the extra money that Blair was able to spend that made him competitive? Blair’s top media expense was television at $2,140,453. Television is a great way to reach voters and tapped into the demographic he was looking for. It Elrich’s largest media expense was also television, with a total of $465k spent. While the media landscape is changing and moving toward more digital formats, it is fitting that their top expenses were television. According to Erika Franklin Fowler in a 2020 piece from the Niskanen Center, “Television still really is a way to reach a large number of viewers at the same time as well as people who don’t traditionally tune into politics.” 
 
-# Question 1 Attempt 1
+We knew Blair had the money and resources to out-do Elrich in advertising, but when it came down to the wire did they push his votes one way or another? The answer was not as exciting as we had hoped.
+
+Blair had more early and election day votes in 2022, he did not in 2018. His election day total in 2018 was 25,739 and his early votes total was 8,671. Elrich beat him by 161 election votes and 329 in early votes.
+
+So Blair has the money and had a larger portion of the Election Day votes, but it still was not enough. Was it the demographics he was reaching, or not reaching that kept he from gaining a competitive edge both years?
+
+We created four precinct level maps to try and start answering this question. The first two were for a basic understanding of where Elrich and Blair did well throughout the county and what precincts that was at. It was surprising to see how varied Blair’s was compared to Elrich and how he had a mix of high and low votes throughout. 
+
+The third map introduced us to the Blair-Elrich total votes difference. Through this map we were able to get a feel for where one candidate took the votes compared to the other.
+
+First impressions of this map showed us that Elrich won in the racially diverse areas of the county. This included Silver Spring, Takoma Park (his home), Rockville, parts of Bethesda, and interestingly some of the white-dominated suburbs in the eastern part of the county such as Ashton, Sandy Spring, Colesville, Cloverly, and others. Elrich also won the western peripheries of the county such as Poolesville and Barnesville.
+
+As for Blair, he won what we would characterize as "the rich" areas of the county, which include Chevy Chase and Potomac. Interestingly, When looking at other places that Blair won, he also won places like Rockville, Gaithersburg, Germantown, Olney, and the upper sparsly-populated portions of the county. Income-wise, these areas are not as uniform in their high median incomes like Chevy Chase and Potomac.
+
+One interesting place where Blair one was in the eastern part of the county among a swath of Elrich votes. This is Kemp Mill. According to Census figures found at https://www.census.gov/quickfacts/kempmillcdpmaryland, the medium household income is $140,000. But that doesn't answer the question of why they voted for Blair over Elrich. Another reason could be its demographics. The area is very Jewish and, according to the Washington Examiner, https://www.washingtonexaminer.com/tightly-knit-kemp-mill, has a very large orthodox Jewish voting pattern. Its unclear if this had any impact on the race since its unknown what Blair's religion is. Elrich himself is Jewish, but in this case, the Orthodox community may not have voted for him? It’s hard to say. Other largely Jewish areas of the county such as Chevy Chase, parts of Rockville, and Potomac also voted for Blair.
+
+Our fourth map honed in a little more, and we narrowed the third map down to show where the the percentage between Blair and Elrich was larger than 10%. 
+
+This showed us that a majority of the county was competitive, regardless of where voters were at. Blair won by somewhat large margins in areas like Potomac, which did not surprise us. Potomac has one of the highest median incomes in the county and Blair himself is a businessman millionaire. The other areas he somewhat won by a little bigger margin are Kemp Mill in the eastern part of the county, and upper Montgomery County near Mt. Airy.
+
+These maps could be expanded, and there is more to look at when it comes to others who were also a part of the race. Where did they take votes that might have pushed Blair ahead finally? Overall though, these maps do start to answer the question of how Elrich keeps pulling out ahead. He’s reaching the racially diverse parts of the county, which means he is most likely connecting with more people in Montgomery County and the feel like he is there for them. Blair is hitting the big money areas, like Chevy Chase and Potomac, and while they have the money to support him — they don’t represent the county as a whole.
+
+While all of our questions did not pan out as expected, one thing is clear: money talks, but it is not all that matters.
+
+
+# Question 1 
 
 How much money did David Blair and Marc Elrich fund themselves in 2022 vs. 2018? Blair is a businessman and millionaire, so it makes sense that he’s funding his own campaign. But how much exactly is he putting into it, and how does it compare to the past election and to how much Elrich’s campaign is raising?
 
-# Answer 1:
+#Q1 Answer:
 Blair contributed $6,386,000 to his own campaign in 2022, while he contributed $7,630,576 in 2018.
 
 Elrich contributed $3,275 to his campaign in 2022, making himself the second largest contributor to his campaign that year. In 2018 he contributed $150 to himself.
@@ -225,10 +264,10 @@ group_by(contributor_name) %>%
 summarize(total_elrich = sum(contribution_amount))
 ```
 
-#Question 2, Attempt #1:
+#Question 2:
 Who were the top 5 contributors to Blair and Elrich in 2022? How about in 2018? What are their connections to the candidates?
 
-#Answer Atempt 1:
+#Q2 Answer:
 
 Blair's Top 5 for 2018
 1.) David  Blair- $10,532,216
@@ -260,7 +299,7 @@ Elrich's Top 5 for 2022
 4.) Margaret Dennis-  $500
 5.) Peter Kahn- $500
 
-Elrich's top contributor in both campaigns was the Montgomery County Gov., which makes sense given that he was a part of a matching funds program. In 2022, he was the second top contributor, which was a little surprising. His second top contributor in 2018 is a Research Professor & Professor Emeritus of physics at the University of Maryland.
+Elrich's top contributor in both campaigns was the Montgomery County Gov., which makes sense given that he was a part of a matching funds program. In 2022, he was the second top contributor, which was a little surprising. Although his second top donation at $3,275 was half as much as Blair's $6,195. His second top contributor in 2018 is a Research Professor & Professor Emeritus of physics at the University of Maryland.
 
 ```{r}
 top_elrich_18 <- elrich_18_contribs %>%
@@ -302,16 +341,15 @@ top_blair_18 <- blair_18_contribs %>%
   head(5)
 ```
 
-#Looking ahead at question 3:
-
 #Q3) 
 David Blair got more early/election day votes in 2022. Elrich got more Mail-in votes in 2022. How did that compare to 2018? People want to know how Marc Elrich won both times, first by 72 voters in 2018 and then 32 in 2022. Where did Marc do well in the three categories: Early voting, election day, and mail-in votes. Did this sway the result at all?
 
-#Question 3 Answer Attempt 1
+#Q3 Answer
+While Blair had more early and election day votes in 2022, he did not in 2018. His election day total in 2018 was 25,739 and his early votes total was 8,671. Elrich beat him by 161 election votes and 329 in early votes.
 
-While Blair had more early and election votes in 2022, he did not in 2018. His election day total in 2018 was 25,739 and his early votes total was 8,671. Elrich beat him by 161 election votes and 329 in early votes.
+This question was not as eye-opening as we hoped it would be. We were looking for something that might have showed how it came down to the wire and it was those final election day votes where Elrich came through and pushed Blair out of the way, or vice versa. Blair having more early and election day votes was interesting and brings up questions of his campaign and all the money they were spending on tv ads might have been sticking with the everyday person more than Elrich's, but it still comes down to it just wasn't quite enough to push him to victory.
 
-
+It was interesting that they flip flopped on how did better in those two categories in 2018 versus 2022.
 
 ```{r}
 correct_22_precinct_res <- correct_22_precinct_res %>%
@@ -335,40 +373,24 @@ group_by(candidate_name) %>%
 summarize(total_votes = sum(early_votes+election_night_votes+mail_in_ballot_1_votes+provisional_votes+mail_in_ballot_2_votes))
 ```
 
+```{r}
+ blair_22_votes <- correct_22_precinct_res %>%
+  filter(candidate_name == "David T. Blair") %>%
+  group_by(early_votes+election_night_votes+mail_in_ballot_1_votes+provisional_votes+mail_in_ballot_2_votes) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
 
+```{r}
+ elrich_22_votes <- correct_22_precinct_res %>%
+  filter(candidate_name == "Marc Elrich") %>%
+  group_by(early_votes+election_night_votes+mail_in_ballot_1_votes+provisional_votes+mail_in_ballot_2_votes)
+```
 
-#Question 4
+#Question 4 (Answers below maps)
 4. Which parts of the county voted for Elrich and which voted for Blair based on precinct-level voting? Are there differences in demographics of those areas? What about income? 
-
-
-
-```{r}
-precincts <- read_csv("data/election_precincts.csv")
-glimpse(precincts)
-```
-
-```{r}
-moco_boundaries <- st_read("data/moco.gdb")
-glimpse(moco_boundaries)
-```
-
-```{r}
-moco_precincts_correct <- st_read("data/MontMD_2022/MontMD_2022.shp") %>%
-  st_zm(drop = TRUE)
-glimpse(moco_precincts_correct)
-```
-
-```{r}
-moco_precincts <- st_read("data/election_precincts/election_precincts.shp")
-glimpse(moco_precincts)
-```
-
-#Maps for Q4
-
-```{r}
-correct_22_precinct_res <- correct_22_precinct_res %>%
-  clean_names()
-```
 
 ```{r}
 moco_22_pre_results_filtered <- correct_22_precinct_res %>%
@@ -392,14 +414,17 @@ blair_results_22_filter_total
 blair_results_joined_2022<- inner_join(moco_precincts_correct, blair_results_22_filter_total, by=c("VOTESPRE"="election_district_precinct"))
 ```
 
-###Blair Map####
+#Blair total votes map
 ```{r}
 ggplot() +
   geom_sf(data=blair_results_joined_2022, aes(fill=total_votes_blair)) +
   scale_fill_viridis_b(option="magma")+
   theme_minimal()
 ```
-####Elirich map####
+#This map shows us the total amount of votes that Blair received throughout the precincts. It's interesting to see how his votes varied from low to high and how it was a lot more of a toss up than ELrich's. It's not surprising to see his votes on the higher end are in areas with higher wealth.
+
+
+#Starting code for the Elrich totals map
 ```{r}
 moco_22_pre_results_filtered_elrich <-correct_22_precinct_res %>%
 filter(candidate_name == "Marc Elrich")
@@ -422,11 +447,14 @@ ggplot() +
   scale_fill_viridis_b(option="magma")+
   theme_minimal()
 ```
-###percentage_change***
+#This map shows us Elrich's total votes and which precincts he won. It surprised us to see that his map is less varied in votes than Blairs. Given that the votes seperating them were slim, we expected to see a similar break down,.
+
 ```{r}
 correct_22_precinct_res <- correct_22_precinct_res %>%
   clean_names() 
 ```
+
+#Filtering for correct office and adding to get totals for next maps
 
 ```{r}
 correct_22_executive <- correct_22_precinct_res %>%
@@ -473,6 +501,12 @@ ggplot() +
   theme_minimal()
 ```
 
+#Q4 Answers for Map 3
+First impressions of this map show us that Marc Elrich won in the racially diverse areas of the county. This includes Silver Spring, Takoma Park (his home), Rockville, parts of Bethesda, and interestingly some of the white-dominated suburbs in the eastern part of the county such as Ashton, Sandy Spring, Colesville, Cloverly, and others. Elrich also won the western peripheries of the county such as Poolesville and Barnesville.
+
+As for Blair, he won what we would characterize as "the rich" areas of the county, which include Chevy Chase, and Potomac. Interestingly, When looking at other places that Blair won, he also won places like Rockville, Gaithersburg, Germantown, Olney, and the upper sparsly-populated portions of the county. Income-wise, these areas are not as uniform in their high median incomes like Chevy Chase and Potomac.
+
+One interesting place where Blair one was in the eastern part of the county among a swath of Elrich votes. This is Kemp Mill. According to Census figures found at https://www.census.gov/quickfacts/kempmillcdpmaryland, the medium household income is $140,000. But that doesn't answer the question of why they voted for Blair over Elrich. Another reason could be its demographics. The area is very Jewish and, according to the Washington Examiner, https://www.washingtonexaminer.com/tightly-knit-kemp-mill, has a very large orthodox Jewish voting pattern. Its unclear if this had any impact on the race since its unknown what Blair's religion is. Elrich himself is Jewish, but in this case, the Orthodox community may not have voted for him? Its hard to say. Other largely Jewish areas of the county such as Chevy Chase, parts of Rockville, and Potomac also voted for Blair.
 
 ```{r}
 
@@ -488,14 +522,28 @@ ggplot() +
   scale_fill_viridis_b(option="magma")+
   theme_minimal()
 ```
-```
+#Q4 Answers for Map 4
+This map shows where the the percentage between Blair and Elrich was larger than 10%. What we see here is that the majority of the county was competitive, regardless of where you were. Blair won by somewhat big margins in areas like Potomac, which doesn't surprise us. Potomac has one of the highest median incomes in the county and Blair himself is a businessman millionaire. The other areas he somewhat won by a little bigger margin are Kemp Mill in the eastern part of the county, and upper Montgomery County near Mt. Airy.
 
 #Question 5
+Where did David Blair and Marc Elrich spend their money on campaign finance resources? Ie: Meta advertisements, yard signs, TV, consulting? This would be interesting to know since Blair made a very big concerted effort to build his profile during the campaign while Elrich relied on incumbency and mainly TV ads to help him. 
+
+#Q5 Answer
+Through this question we found out that Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salaries and Direct Mail by Mail House (R). For this question we also wanted to look at his media expenses, where we found that $1,773 went to online advertising, which seemed low. His highest was television at $2,140,453. This makes sense given a lot of his voting demographic could be reached through television. It is interesting to see how much more he spent only to lose a second election so closely.
+
+Elrich spent significantly less than Blair, with $528,393.29 One of his top media expenses was consulting fees, at around $32k which we found interesting. His biggest media expense was television though, the same as Blair
+
+Some of the most important information we gathered this week is the difference in how they advertised. Blair went all out on advertising on most fronts, such as with television. He spent 4x as much on tv ads than Elrich. It shows an interesting dynamic between the millionaire Blair and the incumbent Elrich. 
+
+We know Blair has the money and the connections, but it's interesting to see that despite all of this it wasn't enough two campaigns in a row. Once we figure our map in Question 4, we are interested in looking at how where Blair had more votes looks like demographics wise.
 
 ```{r}
 blair_22_expenses <- read_csv("data/blair_expenses_2022.csv")
 ```
-
+```{r}
+blair_22_expenses <- blair_22_expenses %>%
+  clean_names()
+```
 
 ```{r}
 blair_22_exp_clean_grouped <- blair_22_exp_clean %>%
@@ -505,18 +553,17 @@ blair_22_exp_clean_grouped <- blair_22_exp_clean %>%
 ```
 
 
-# Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R).
+# Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salaries and Direct Mail by Mail House (R).
 
-#dive into media
+#Dive into media
 ```{r}
 blair_expenses_22_medias <- blair_22_expenses %>%
-filter(expense category == "Media") %>%
+filter(expense_category == "Media") %>%
 group_by(expense_purpose) %>%
 summarize(total_category = sum(amount)) %>%
 arrange(desc(total_category))
-
-blair_expenses_2022_medias
 ```
+
 #Blair spent $1773.00 on online advertising
 
 ```{r}
@@ -525,6 +572,7 @@ group_by(expense_category) %>%
 summarize(total_category = sum(amount)) %>%
 arrange(desc(total_category))
 ```
+
 # Elrich spent $528393.29 on media which is significantly less than Blair
 
 ```{r}
@@ -534,4 +582,46 @@ group_by(expense_purpose) %>%
 summarize(total_category = sum(amount)) %>%
 arrange(desc(total_category))
 ```
-# Elrich spent 32K on consulting fees.
+
+# Elrich spent 32K on consulting fees. Top expense was also tv, at $465k.
+
+
+#Weekly Progress Updates From Previous Submissions
+
+# Week Two Update:
+We  feel relatively comfortable with the data that we were able to find and download this week. Cleaning it was not that time consuming and it seems that we have all of the information we will need, other than the 2022 county results data and some iffy things surrounding mail/absentee ballots. Our first two questions are about self-funding and top contributors, which at this point do not seem like they should be an issue. Our third question is supposed to look at early voting and mail in votes. Right now it looks like the second half of the problem could be an issue. If so, we can tweak the question to focus solely on early votes and dive deeper into that.
+
+Our other questions are about campaign finances going toward ads and precinct level data, both of which we should be good to go on.
+
+The data sets we are analyzing are for two filing periods, 2022 and 2018.
+
+We chose these years because Elrich and Blair ran for the same position in both. The 2022 and 2018 campaign finance data sets are limited to any contributions made during that filing year. 
+
+Other than the one data set not including all of the information we need, we're not seeing any major reasons that won't be able to complete our work. We did see where we will have to do something similar to our first project, where the state is identified by acronym instead of it's full name, so we will have to change that.
+
+Ryan did try to create a 2022 county result sheet, but we cannot get it to load.
+
+# Week 3 Update
+
+If all is correct, we successfully ran the code for our first two questions this week. These questions looked at Blair and Elrich's self-funding when it came to their campaigns and their top contributors. We were a little shocked at first when we saw that Blair's top five contributors were all family members or himself. We started answering our questions and what this means, but we do still need to look up all of the people who donated to Elrich and see if we can find out who they are and if they are a significant connection.
+
+We also looked ahead to question 3. This question might require some tweaking. It's about mail in ballots and those votes are grouped a little differently in the 2018 county data, where just provisional votes are listed. In the 2022 data there are mail in and provisional. We believe that we will just have combine the mail in and provisional columns for the '22 data, which seems simple enough.
+
+#Week 4 Update
+
+This week we completed question 5, where found out that Blair spent nearly $3.1 mil in 2022. His top 3 expense categories were Media, Salarties and Direct Mail by Mail House (R). For this question we also wanted to look at his media expenses, where we found that $1,773 went to online advertising, which seemed low. His highest was television at $2,140,453. This makes sense given a lot of his voting demographic could be reached through television. It is interesting to see how much more he spent only to lose a second election so closely.
+
+Elrich spent significantly less than Blair, with $528,393.29One of his top media exprense was consulting fees, at around $32k which we found interesting. His biggest media expense was television though, the same as Blair
+
+We also worked on question 4, where we were able to find the .gdb file for Montgomery County boundaries which we loaded up and got a quick map for. We are stuck though for how to overlay the precincts onto that map. We are using pre-lab 9 as an example at the precinct map for that lab is already a gdb gile. We thought maybe Tigris was the best option, but that seems like a backward step since we're already looking at one county and have it on a map.
+
+Once we figure this out, we can put in out data and start answering questions about which part of the county voted for whom and what that says about the candidate's voters they attracted/demographics/etc.
+
+We also got part of the way through question 3, where we got the Elrich and Blair data seperated and bound together. For next week we need to chat with Derek about figuring out how to bring in the 2022 data, since the files for this year don't have them included for some reason. Once we have that, we fill confident about moving forward with the code.
+
+##Important Findings
+
+Some of the most important information we gathered this week is the difference in how they advertised. Blair went all out on advertising on most fronts, such as with television. He spent 4x as much on tv ads than Elrich. It shows an interesting dynamic between the millionaire Blair and the incumbent Elrich. 
+
+We know Blair has the money and the connections, but it's interesting to see that despite all of this it wasn't enough two campaigns in a row. Once we figure our map in Question 4, we are interested in looking at how where Blair had more votes looks like demographics wise.
+
