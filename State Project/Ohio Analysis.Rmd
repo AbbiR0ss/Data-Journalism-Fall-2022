@@ -1,0 +1,393 @@
+---
+title: "State Analysis Project"
+author: "Abbi Ross"
+date: "2022-12-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Loading libraries
+```{r}
+options(scipen=999)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(sf)
+library(ggthemes)
+```
+
+#Load in and clean Dem and Rep disbursement data
+```{r}
+dem_disbursements <- read_csv("data/dem-disbursements.csv")
+```
+
+```{r}
+dem_disbursements <- dem_disbursements %>%
+  clean_names()
+```
+The Democrat disbursements includes 38 columns 1,254 rows.
+
+#Removing NA columns the very long way it feels like
+```{r}
+dem_disbursements <-  dem_disbursements %>% 
+select(-payee_middle_name, -unused_recipient_committee_id, -back_reference_transaction_id, -back_reference_schedule_id, -candidate_office, -candidate_office_description, -candidate_office_district, -candidate_name, -candidate_first_name, -candidate_last_name, -candidate_middle_name, -candidate_prefix, -candidate_suffix, -candidate_office_state, -candidate_office_state_full, -election_type, -election_type_full, -fec_election_type_desc, -fec_election_year, -original_sub_id, -back_reference_transaction_id, -back_reference_schedule_id, -recipient_committee_id, -beneficiary_committee_name, -national_committee_nonfederal_account, -disbursement_type, -disbursement_type_description, -memo_code_full, -candidate_id, -conduit_committee_name, -conduit_committee_street1, -conduit_committee_street2, -conduit_committee_city, -conduit_committee_state, -conduit_committee_zip, -spender_committee_org_type, -payee_prefix, -payee_suffix, -payee_employer, -payee_occupation, -ref_disp_excess_flg, -comm_dt, -image_number, -report_year, -report_type, -line_number, -transaction_id, -file_number, -entity_type, -amendment_indicator, -amendment_indicator_desc, -semi_annual_bundled_refund)
+``` 
+
+```{r}
+rep_disbursements <- read_csv("data/rep-disbursements.csv")
+rep_disbursements
+```
+
+The Republican disbursements data includes 78 columns and 1,304 rows.
+
+```{r}
+rep_disbursements <- rep_disbursements %>%
+  clean_names()
+```
+
+```{r}
+rep_disbursements <-  rep_disbursements %>% 
+select(-payee_middle_name, -unused_recipient_committee_id, -back_reference_transaction_id, -back_reference_schedule_id, -candidate_office, -candidate_office_description, -candidate_office_district, -candidate_name, -candidate_first_name, -candidate_last_name, -candidate_middle_name, -candidate_prefix, -candidate_suffix, -candidate_office_state, -candidate_office_state_full, -election_type, -election_type_full, -fec_election_type_desc, -fec_election_year, -original_sub_id, -back_reference_transaction_id, -back_reference_schedule_id, -recipient_committee_id, -beneficiary_committee_name, -national_committee_nonfederal_account, -disbursement_type, -disbursement_type_description, -memo_code_full, -candidate_id, -conduit_committee_name, -conduit_committee_street1, -conduit_committee_street2, -conduit_committee_city, -conduit_committee_state, -conduit_committee_zip, -spender_committee_org_type, -payee_prefix, -payee_suffix, -payee_employer, -payee_occupation, -ref_disp_excess_flg, -comm_dt, -image_number, -report_year, -report_type, -line_number, -transaction_id, -file_number, -entity_type, -amendment_indicator, -amendment_indicator_desc, -semi_annual_bundled_refund)
+``` 
+
+
+#Load in and clean Dem/Rep receipts
+```{r}
+dem_receipts <- read_csv("data/dem-receipts.csv")
+dem_receipts
+``` 
+The Democrat receipts includes 79 columns and 6,929 rows.
+
+```{r}
+dem_receipts <- dem_receipts %>%
+  clean_names() %>%
+  select(contributor_name, contributor_occupation, contributor_state, contributor_city, contribution_receipt_amount, contributor_aggregate_ytd, donor_committee_name)
+```
+
+
+```{r}
+rep_receipts <- read_csv("data/rep-receipts.csv")
+```
+The Republican receipts includes 79 columns and 1,201 rows.
+
+```{r}
+rep_receipts <- rep_receipts %>%
+  clean_names() %>%
+  select(contributor_name, contributor_occupation, contributor_state, contributor_city, contribution_receipt_amount, contributor_aggregate_ytd, donor_committee_name)
+```
+
+Introducing the data:
+
+I was given Ohio to analyze for our final project. It is a not a state I knew a lot about before, other than it's where my older brother spends Christmas since his dad lives there. So, I set out to find out what I could.
+
+According to Census data from 2021, there are almost 11.8 million people who live in Ohio. Of these people, 81.2% are white, 13.2% are Black or African American, 2.7% are Asian, 4.3% of Hispanic or Latino and 2.6% are two or more races. (https://www.census.gov/quickfacts/OH)
+
+The median house income in 2021 was $61,938 and the percent of people living in poverty was around 13%.
+
+While this information is just a quick snapshot, it gave me a better understanding of Ohio and it helps me to know why their politics may skew a certain way.
+
+I also found out that Ohio is regularly considered a swing state. In this year’s election, their Senate race between Democratic Rep. Tim Ryan and Republican candidate J.D. Vance was considered very competitive. This checks out looking back on what I now know. 
+
+I found that Tim Ryan's Victory Fund contributed the largest amount to the Ohio Democratic Party at $500,000. Ryan's name popped up throughout the disbursements and receipts, but his popularity and support fell short during on election day. The AP called the race for Vance on election evening, Vance had 53.6% to Ryan’s 48.4% with 93% of the vote in. I did not realize that Vance was the author of "Hillbilly Elegy" until reading about the race results. Seeing that he won now, even though Ryan brought in more funding, according to U.S. News and World Reports, makes a lot of sense. He had the support of former President Donald Trump in a swing state.
+
+I would have loved to incorporate more demographic data and precinct level data into this assignment to see what parts of Ohio Vance tapped into. Was he reaching the rural areas, or the more wealthy Republican hot spots?
+
+In my questions, I tried to introduce the topic at hand through my analysis of the Republican data and then compared the two parties when looking at the Democratic data.
+
+#Analyzing what the Republican party received in political contributions and who the donors were.
+
+To kick off my analysis of the Republican parties receipts, I wanted to know about these contributions and what the biggest and smallest numbers were. This was also a quick way to see who was contributing these big amounts. Through the code below, I found that the Republican National Committee contributed the largest amount at $121,600. The second largest donation came from Take Back the House 2022, a Republican joint funding comm., with $115,841. The other top 10 donations, except for the 10th, came from the Republican National Comm. and were all in the $50k range. The 10th biggest contribution came from the Ohio Republican State Comm. Account and totaled $52,121.
+
+The top 10 smallest donations ranged from $20 to $25. None of those donors stood out to me, and were either small companies or regular people.
+
+```{r}
+rep_receipts_amounts <- rep_receipts %>%
+  select(contribution_receipt_amount, contributor_name) %>% 
+  arrange(desc(contribution_receipt_amount))
+  
+```
+
+```{r}
+rep_receipts_states <- rep_receipts %>%
+  group_by(contributor_state) %>% 
+  summarise(receipts = (sum(contribution_receipt_amount))) %>%
+  arrange(desc(contributor_state))
+```
+
+The top five states that contributed to Ohio Republican Party were Ohio ($1,714,708), Washington D.C. ($623,675), an unidentified state/country ($190,644), Maryland ($123,046) and Virginia ($50,494).
+
+```{r}
+rep_receipts_contributors <- rep_receipts %>%
+  group_by(contributor_occupation) %>%
+  summarise(receipts = (sum(contribution_receipt_amount) ))
+```
+
+With that in mind, I'd like to know more about who those donating are. The code below shows that the top occupation of contributors was actually those who are retired, with 413 retirees donating. The second spot was another NA with 266 donations, the third spot went to attorney’s with 82 donations, the fourth to business owners with 26 and the fifth to company president’s also with 26. I am still stumped about the NA column and tried looking at the original data set for context clues for what it could be.
+
+```{r}
+rep_receipts_contributors_occ <- rep_receipts %>%
+  group_by(contributor_occupation) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
+
+Knowing that the majority of Ohio's contribution money comes from retirees, lawyers and company presidents, I wondered how much these people were donating. The code below gave me that answer through finding the mean. The average contribution was $2.352.607, an amount I find significant considering most people cannot just drop a casual $2k on political campaigns. I think this speaks to the Republican party and what their supporters backgrounds include.
+
+```{r}
+rep_receipts_mean <- rep_receipts %>%
+  summarise(mean(contribution_receipt_amount))
+```
+
+I was also interested in knowing where these contributors came from. Through the code below I found that eight of the top ten cities are in Ohio — which makes sense given that most contributors are from Ohio. In order from most contributions to fewer, the top 10 were: Cincinnati, Columbus, Athens, Canton, Cleveland, Dover, Dublin, Washington D.C., Akron Ohio and Arlington, VA.
+
+```{r}
+rep_top_cities <- rep_receipts %>%
+  group_by(contributor_city, contributor_state) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
+This code was a last minute addition to try and breakdown what these numbers looked like, it worked partially but wasn't giving me what I wanted.
+```{r}
+rep_receipt_amounts_between <- rep_receipts %>%
+  mutate(
+    amount = case_when(
+         contribution_receipt_amount < 50 ~ "Less than $50",
+         contribution_receipt_amount >= 50 &  contribution_receipt_amount <= 100 ~ "Between $50 and $100",
+         contribution_receipt_amount > 100 &  contribution_receipt_amount <= 500 ~ "Between $100 and $500",
+         contribution_receipt_amount > 501 &  contribution_receipt_amount <= 1000 ~ "Between $501 and $100",
+         contribution_receipt_amount > 1001 &  contribution_receipt_amount <= 10000 ~ "Between $1001 and $10k",
+         contribution_receipt_amount >= 10001 ~ "More than $10k"
+      )
+  ) %>%
+  summarise(
+    count_contribs = n()
+  )
+  
+```
+
+#Analyzing what the Democratic party received in political contributions and who the donors were.
+
+To kick off my analysis of the Democrat party's receipts, I followed the same thought process as with the Republicans. I wanted to know about these contributions and what the biggest and smallest numbers were. 
+
+Through the code below, I found that Tim Ryan's Victory Fund contributed the largest amount at $500,000. A quick Google search informed me that Ryan is an Ohio Representative who ran for Senate in a very competitive race against Republican J.D. Vance. Ryan lost to Vance on Nov. 8.
+
+The second largest donation, of also $500k, came from the Minnesota Farm Labor Democratic Party. Despite a few detailed Google searches, I could not find a connection between the group and Ohio. I also looked at their Open Secrets page to see what their expenditures looked like, where I found that the $500k donation to Ohio was their largest and even came before Minnesota's Dem Party. Other states they donated too include North Carolina and Iowa. (https://www.opensecrets.org/political-action-committees-pacs/minnesota-democratic-farmer-labor-party/C00025254/expenditures/2022)
+
+I think there is a lot to br said for the second largest contribution coming from a random Minnesota party. I would love to see a story looking into this group and their spending.
+
+The 3rd, 4th, 9th and 10th largest donations came from Tim Ryan groups. The 5th, 6th and 7th largest contributions came from the DCCC as it is listed in the data. The Democratic Congressional Campaign Committee is a political committee that dubs itself the "official campaign arm of the Democrats in the House of Representatives." This also makes sense given that one of Ohio's biggest race's was Ryan's.
+
+The top 10 smallest donations ranged from $0.00 (I am not sure how, but this honor goes to Deborah C. Lindsay) to $2.50. It was interesting to see how low these were compared to the Republican's.
+
+```{r}
+dem_receipts_amounts <- dem_receipts %>%
+  select(contribution_receipt_amount, contributor_name) %>% 
+  arrange(desc(contribution_receipt_amount))
+```
+
+```{r}
+dem_receipts_states <- dem_receipts %>%
+  group_by(contributor_state) %>% 
+  summarise(receipts = (sum(contribution_receipt_amount))) %>%
+  arrange(desc(contributor_state))
+```
+
+The top five states that contributed to Ohio Democratic Party were Ohio ($5,014,890), Washington D.C. ($2,580,824), Massachusetts  ($712,510), Minnesota ($511,835) and California ($416,978).
+
+These numbers stood out to me considering how many were bigger than Republican state contributions. Their largest state contributor was also Ohio, but their in-state contributions only totaled $1,714,708. Other top 5 state contributors ranged from $600k to $50k. I honestly would have expected to see more money coming from those top Republican states.
+```{r}
+dem_receipts_contributors <- dem_receipts %>%
+  group_by(contributor_occupation) %>%
+  summarise(receipts = (sum(contribution_receipt_amount)))
+```
+
+Again, I wanted to know more about who those donating are and now, how they compare to the Republican’s. The code below shows that the top occupation of contributors was listed as “Conduit Total Listed in Agg. Field”, with 2,858 donations counted that way. According to the FEC this is, “a contribution that a contributor directs (either orally or in writing) to a clearly identified candidate or authorized committee through an intermediary or conduit. Committees report information about both the original contributor and the conduit that handled the contribution.”
+
+The second spot went to those “not employed” with 1,501 donations. I do have a theory that this could also include those who are retired, since most people who are simply unemployed probably aren’t donating to campaigns. Like with the Republican data, there is an NA field with 439 contributions at spot number 3.
+
+The fourth spot goes to retirees with 238 contributions and the fifth to attorney’s at 198. Minus the first spot, these line up very similarly to the Republican’s top occupations from contributors. I think this makes sense since the voter demographics are similar. Voters are often older, retired people and those in the workforce.
+
+```{r}
+dem_receipts_contributors_occ <- dem_receipts %>%
+  group_by(contributor_occupation) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
+
+Ohio Democrats donating had similar occupations to the Republican contributors, so I was a little surprised to see that their mean donation amount was less  by almost $1,000. The average contribution for the Dem party was $1,547.943 while the average Republican one was $2.352.607.
+
+Given that the Democratic party was seeing larger donations from their top donors, I would have thought that number would have boosted their average. Again though, it does make sense upon further thought that the Republican party's average would be higher. It seems that their demographic could end up being able to drop more money, more easily.
+
+```{r}
+dem_receipts_mean <- dem_receipts %>%
+  summarise(mean(contribution_receipt_amount))
+```
+
+I was also surprised to see how varied the top 10 contributor cities were for the Democratic party compared to the Republican, which only had two outside of Ohio.
+
+The city with the most contributions to the Dem party was Cambridge, Massachusetts, with 2,846. I also found this interesting because the Republican's top city, Cincinnati, only had 122 contributions. This information, paired with the knowledge we have from the code above on the average donation amounts, leads me to believe that Republican donors are contributing less but at higher amounts.
+
+The other top ten contributors cities were Columbus (435), Cincinnati (428), Washington D.C. (171), Cleveland (155), New York (99), Wilmington (93), Dayton (71) and Port Clinton (71).
+
+```{r}
+dem_top_cities <- dem_receipts %>%
+  group_by(contributor_city, contributor_state) %>%
+  summarise(
+    count_contribs = n()
+  ) %>%
+  arrange(desc(count_contribs))
+```
+Like mentioned above, this code was a last minute addition to try and breakdown what these numbers looked like, it worked partially but wasn't giving me what I wanted. I did want to show I attempted it though.
+
+```{r}
+dem_receipt_amounts_between <- dem_receipts %>%
+  mutate(
+    amount = case_when(
+         contribution_receipt_amount < 50 ~ "Less than $50",
+         contribution_receipt_amount >= 50 &  contribution_receipt_amount <= 100 ~ "Between $50 and $100",
+         contribution_receipt_amount > 100 &  contribution_receipt_amount <= 500 ~ "Between $100 and $500",
+         contribution_receipt_amount > 501 &  contribution_receipt_amount <= 1000 ~ "Between $501 and $100",
+         contribution_receipt_amount > 1001 &  contribution_receipt_amount <= 10000 ~ "Between $1001 and $10k",
+         contribution_receipt_amount >= 10001 ~ "More than $10k"
+      )
+  ) %>%
+  summarise(
+    count_contribs = n()
+  )
+```
+
+#Analyzing what the Republican party spent
+
+One of the first things I wanted to know when looking at what the Republican party spent was where this money was going to, and what those amounts looked like. I answered the first part of this question through the table below, which shows me all of the states in the "recipient_state" column and how many times those states appeared. The top state they were disbursing money to was Ohio with 599 payouts, Wisconsin followed with 128, Georgia with 95, Pennsylvania with 84 and California with 52 to round out the top 5.
+
+```{r}
+sort(table(rep_disbursements$recipient_state), decreasing = TRUE)
+```
+
+With that in mind, I was ready to look into the largest disbursements. At the top of the were payroll contributions of $148,089 and $115,626 both made out to organization listed in Florida. Those payment were two of the 10 Florida received, based on the table above. Four other of the top 10 contributions go to groups in Florida, that alone seems like an interesting thing to look into. While it might not be a full story, it would be interesting to know more about why so much of Ohio's Republican party disbursements are going to payroll in Florida.
+
+```{r}
+rep_disbursements_totals <- rep_disbursements %>%
+  select(disbursement_amount, disbursement_description, recipient_state) %>%
+  arrange(desc(disbursement_amount))
+```
+
+While not the code I originally set out to create, through the block below I also discovered that the most common disbursement for the party was $5, which occurred 40 times. A quick look at the data set shows that this was mostly made up of bank fees.
+```{r}
+rep_disbursement_counts <- rep_disbursements %>%
+  group_by(disbursement_amount) %>%
+  summarise(
+    count_disbursements = n()
+  ) %>%
+  arrange(desc(count_disbursements))
+```
+
+The code below showed that the largest disbursement amount was for $148,089 for payroll. The second largest pay out also went to payroll at $115k, as well as the the 4th and 5th spots as well. The third spot went to FEA mailers, with $69,181 spent.
+
+```{r}
+rep_disbursements_top <- rep_disbursements %>%
+  select(disbursement_description, disbursement_amount) %>% 
+  arrange(desc(disbursement_amount))
+```
+
+The average disbursement was $1,408.
+
+```{r}
+rep_disbursements_mean <- rep_disbursements %>%
+  summarise(mean(disbursement_amount))
+```
+
+#Analyzing what the Democratic party spent
+
+Ohio was also the top disbursement state for the Democratic party at 808 payouts. Next up was Washington DC with 93, Massachusetts with 91, New York with 39 and California with 29. There was some overlap in top cities between the two parties, with Ohio, New York and California making an appearance in both. Nothing about these states stood out to me when comparing them.
+
+```{r}
+sort(table(dem_disbursements$recipient_state), decreasing = TRUE)
+```
+
+The largest disbursement for the Democratic Party was for $500k for a “federal swap” that was received in Minnesota. The second largest disbursement of $275k was for a “federal fund swap” that was received in Michigan. I think this could be the party transferring funds to other candidates or committees. According to the FEC, “A candidate’s authorized committee may transfer unlimited campaign funds to a party committee or organization.” This type of disbursement pops up again in the top 10. I was surprised to not see anything pay roll related in this top 10 considering how heavily it was seen in the Republican's top disbursements. This makes me wonder if the one party is paying their staff more or just happens to have more staff and that is why it is higher.
+
+Other notable top ten expenses include two for “volunteer exempt mail- Ryan” at $184,548 a piece and legal services for $123,977.
+
+```{r}
+dem_disbursements_totals <- dem_disbursements %>%
+  select(disbursement_amount, disbursement_description, recipient_state) %>%
+  arrange(desc(disbursement_amount))
+```
+
+I was surprised by the difference in the amount of the most common disbursement for the Democratic party. The code below shows 53 counts for a payment of $50, a considerable difference form the most common $5 for the GOP. Their second most common charge was for $5k at 43 times.  A quick look at the table shows that most of the $50 payouts were for payroll or reimbursement, which makes sense. The $5k charges were all for some sort of fundraising.
+
+```{r}
+dem_disbursement_counts <- dem_disbursements %>%
+  group_by(disbursement_amount) %>%
+  summarise(
+    count_disbursements = n()
+  ) %>%
+  arrange(desc(count_disbursements))
+```
+
+The average disbursement was $4410, which is significantly higher than the Republican party's $1,408 average. I think this opens the door to a story examining what these two parties are spending their money on, how big their staff's are, what their biggest expenses are, etc. It would also be interesting to compare that informatino over the years and see what has changed.
+
+```{r}
+dem_disbursements_mean <- dem_disbursements %>%
+  summarise(mean(disbursement_amount))
+```
+
+#Making charts, hopefully
+
+Making charts was definitely not one of my strong suits in this class, so I know there is a lot of room for improvement here. I wanted to make that while not super detailed or revealing, would still make sense to anyone who might not know a thing about Ohio's political party finances like I did before. 
+
+```{r}
+dem_disbursements_chart <- dem_disbursements %>%
+  group_by(disbursement_amount)%>%
+  arrange(desc(disbursement_amount))%>%
+  head(15)
+dem_disbursements_maps
+```
+
+```{r}
+dem_disbursements_chart %>%
+  ggplot() +
+  geom_bar(aes(x=reorder(recipient_state,disbursement_amount), weight= disbursement_amount)) +
+  coord_flip() + 
+  theme_economist() +
+  labs(
+    title="Connecticut Receives Over 800k from Ohio Dems",
+    x = "States",
+    y = "Amount Disbursed",
+    caption = "Source: Federal Election Commission"
+  )
+```
+
+
+```{r}
+rep_disbursements_chart <- rep_disbursements %>%
+  group_by(disbursement_amount)%>%
+  arrange((disbursement_amount))%>%
+  head(15)
+rep_disbursements_chart
+```
+
+```{r}
+rep_disbursements_chart %>%
+  ggplot() +
+  geom_bar(aes(x=reorder(recipient_state,disbursement_amount), weight= disbursement_amount)) +
+  coord_flip() + 
+  theme_economist() +
+  labs(
+    title="Breaking Down Voided Charges for the Ohio GOP",
+    x = "States",
+    y = "Amount Disbursed",
+    caption = "Source: Federal Election Commission"
+  )
+```
+I actually think this chart introduces an interesting topic, it turns out that these negative amounts are voided charges. I did not realize these were included until halfway through this evening and I think it would be very interesting to look more into these charges and how they occur, some are pretty large.
